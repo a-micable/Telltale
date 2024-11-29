@@ -1,0 +1,22 @@
+diff --git a/src/dispatcher.cpp b/src/dispatcher.cpp
+index 1bb697a..c8e9ee4 100644
+--- a/src/dispatcher.cpp
++++ b/src/dispatcher.cpp
+@@ -101,6 +101,8 @@ void Dispatcher::flush_pending_schema_updates(ReplayMode mode) {
+         }
+         registry_.apply_schema_update(update);
+         ++schema_updates_applied_;
++        cached_handler_entry_ = nullptr;
++        cached_handler_type_ = 0xFFFF;
+     }
+     pending_schema_updates_.clear();
+ }
+@@ -133,6 +135,8 @@ Result Dispatcher::process_schema_update(const std::vector<uint8_t>& payload,
+         return ar;
+     }
+     ++schema_updates_applied_;
++    cached_handler_entry_ = nullptr;
++    cached_handler_type_ = 0xFFFF;
+     if (verbose_ && output_) {
+         *output_ << "[schema] applied " << SchemaUpdateCodec::flags_to_string(update.flags)
+                  << " for type 0x" << std::hex << update.type_id << std::dec << std::endl;

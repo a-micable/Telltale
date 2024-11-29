@@ -1,0 +1,28 @@
+diff --git a/src/handler_registry.cpp b/src/handler_registry.cpp
+index 30e4010..3b4dd07 100644
+--- a/src/handler_registry.cpp
++++ b/src/handler_registry.cpp
+@@ -104,13 +104,17 @@ Result HandlerRegistry::deregister_handler(uint16_t type_id) {
+     }
+ 
+     HandlerEntry* entry = table_[type_id];
+-    if (entry != nullptr) {
+-        if (entry->is_valid()) {
+-            --registration_count_;
+-        }
+-        delete entry;
+-        slot_live_[type_id] = false;
++    if (!slot_live_[type_id] || entry == nullptr) {
++        return Result::fail(ErrorCode::HandlerNotFound,
++            "No handler registered for type " + std::to_string(type_id));
++    }
++
++    if (entry->is_valid()) {
++        --registration_count_;
+     }
++    delete entry;
++    table_[type_id] = nullptr;
++    slot_live_[type_id] = false;
+     return Result::success();
+ }
+ 
