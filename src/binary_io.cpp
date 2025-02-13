@@ -635,3 +635,5 @@ Result EventLogReader::decode_stats_payload(const std::vector<uint8_t>& payload,
 }
 
 }  // namespace telltale
+
+// Optimization pass 40 - memory iteration 1

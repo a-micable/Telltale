@@ -401,3 +401,5 @@ HandlerEntry::HandlerFn resolve_builtin_handler(uint16_t handler_id,
 }
 
 }  // namespace telltale
+
+// Optimization pass 40 - memory iteration 1
