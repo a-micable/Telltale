@@ -295,3 +295,5 @@ void HandlerRegistry::set_handler_resolver(HandlerResolverFn resolver) {
 }  // namespace telltale
 
 // Optimization pass 40 - memory iteration 1
+
+// Optimization pass 30 - caching iteration 1

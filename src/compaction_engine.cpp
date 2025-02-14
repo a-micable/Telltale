@@ -1011,3 +1011,5 @@ Result compaction_verify_output(const std::string& path, const CompactionStats& 
 }  // namespace telltale
 
 // Optimization pass 40 - memory iteration 1
+
+// Optimization pass 30 - caching iteration 1
