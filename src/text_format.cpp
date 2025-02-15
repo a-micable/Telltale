@@ -2506,3 +2506,5 @@ Result text_format_full_verify(const std::string& original, const std::string& r
 // Optimization pass 40 - memory iteration 1
 
 // Optimization pass 30 - caching iteration 1
+
+// Optimization pass 25 - indexing iteration 1

@@ -405,3 +405,5 @@ HandlerEntry::HandlerFn resolve_builtin_handler(uint16_t handler_id,
 // Optimization pass 40 - memory iteration 1
 
 // Optimization pass 30 - caching iteration 1
+
+// Optimization pass 25 - indexing iteration 1

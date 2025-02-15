@@ -109,3 +109,5 @@ uint32_t Crc32::of_header_fields(uint16_t version, uint32_t record_count) {
 // Optimization pass 40 - memory iteration 1
 
 // Optimization pass 30 - caching iteration 1
+
+// Optimization pass 25 - indexing iteration 1

@@ -639,3 +639,5 @@ Result EventLogReader::decode_stats_payload(const std::vector<uint8_t>& payload,
 // Optimization pass 40 - memory iteration 1
 
 // Optimization pass 30 - caching iteration 1
+
+// Optimization pass 25 - indexing iteration 1
