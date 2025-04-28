@@ -4,11 +4,11 @@
 #include <chrono>
 
 /**
- * Example: Network-based replay
+ * Example: Distributed log aggregation
  */
 
 int main() {
-    std::cout << "Running: Network-based replay" << std::endl;
+    std::cout << "Running: Distributed log aggregation" << std::endl;
     
     // Initialize subsystems
     std::vector<std::thread> threads;

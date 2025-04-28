@@ -4,11 +4,11 @@
 #include <chrono>
 
 /**
- * Example: Network-based replay
+ * Example: Concurrent event processing
  */
 
 int main() {
-    std::cout << "Running: Network-based replay" << std::endl;
+    std::cout << "Running: Concurrent event processing" << std::endl;
     
     // Initialize subsystems
     std::vector<std::thread> threads;

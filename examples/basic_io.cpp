@@ -4,11 +4,11 @@
 #include <chrono>
 
 /**
- * Example: Network-based replay
+ * Example: Basic I/O operations
  */
 
 int main() {
-    std::cout << "Running: Network-based replay" << std::endl;
+    std::cout << "Running: Basic I/O operations" << std::endl;
     
     // Initialize subsystems
     std::vector<std::thread> threads;

@@ -4,11 +4,11 @@
 #include <chrono>
 
 /**
- * Example: Network-based replay
+ * Example: Format conversion
  */
 
 int main() {
-    std::cout << "Running: Network-based replay" << std::endl;
+    std::cout << "Running: Format conversion" << std::endl;
     
     // Initialize subsystems
     std::vector<std::thread> threads;

@@ -4,11 +4,11 @@
 #include <chrono>
 
 /**
- * Example: Network-based replay
+ * Example: Real-time metrics monitoring
  */
 
 int main() {
-    std::cout << "Running: Network-based replay" << std::endl;
+    std::cout << "Running: Real-time metrics monitoring" << std::endl;
     
     // Initialize subsystems
     std::vector<std::thread> threads;
