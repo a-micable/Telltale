@@ -24,6 +24,7 @@ LIB_SRCS = \
 	$(SRC_DIR)/text_import.cpp \
 	$(SRC_DIR)/network.cpp \
 	$(SRC_DIR)/storage_backends.cpp \
+	$(SRC_DIR)/health.cpp \
 	$(SRC_DIR)/cli.cpp
 
 MAIN_SRC = $(SRC_DIR)/main.cpp
@@ -51,6 +52,7 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_managers.cpp \
 	$(TEST_DIR)/test_fresh_clone.cpp \
 	$(TEST_DIR)/test_filler_cleanup.cpp \
+	$(TEST_DIR)/test_health_validation.cpp \
 	$(TEST_DIR)/test_telltale.cpp
 
 LIB_OBJS  = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(LIB_SRCS))

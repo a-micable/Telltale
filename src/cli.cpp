@@ -13,9 +13,11 @@
 #include "telltale/diff_engine.hpp"
 #include "telltale/dispatcher.hpp"
 #include "telltale/filter_engine.hpp"
+#include "telltale/health.hpp"
 #include "telltale/logging.hpp"
 #include "telltale/schema_update.hpp"
 #include "telltale/text_format.hpp"
+#include "telltale/validation.hpp"
 
 namespace telltale {
 
@@ -58,6 +60,7 @@ void Cli::print_usage() {
   std::cout << "  compact Merge multiple log files into one output file" << std::endl;
   std::cout << "  export  Export a binary log to plain-text format" << std::endl;
   std::cout << "  import  Import a plain-text log back to binary format" << std::endl;
+  std::cout << "  health  Print JSON health status for automation" << std::endl;
   std::cout << "  help    Show this help message" << std::endl;
 }
 
@@ -249,6 +252,11 @@ int Cli::cmd_write(const std::vector<std::string>& args) {
     return 1;
   }
   std::string output = args[2];
+  Result vr = validate_output_path(output);
+  if (!vr.ok()) {
+    std::cerr << "Validation error: " << vr.message << std::endl;
+    return 1;
+  }
   size_t event_count = 20;
   std::string ec = get_flag_value(args, "--events", "20");
   event_count = static_cast<size_t>(std::strtoul(ec.c_str(), nullptr, 10));
@@ -262,6 +270,11 @@ int Cli::cmd_replay(const std::vector<std::string>& args) {
     return 1;
   }
   std::string input = args[2];
+  Result vr = validate_input_path(input);
+  if (!vr.ok()) {
+    std::cerr << "Validation error: " << vr.message << std::endl;
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
 
   Dispatcher dispatcher;
@@ -464,6 +477,12 @@ int Cli::cmd_import(const std::vector<std::string>& args) {
   return 0;
 }
 
+int Cli::cmd_health(const std::vector<std::string>& /*args*/) {
+  HealthReport report = build_health_report();
+  std::cout << format_health_report_json(report) << std::endl;
+  return report.status == "ok" ? 0 : 1;
+}
+
 int Cli::run(int argc, char* argv[]) {
   if (argc < 2) {
     print_banner();
@@ -482,6 +501,7 @@ int Cli::run(int argc, char* argv[]) {
   if (cmd == "compact") return cmd_compact(args);
   if (cmd == "export") return cmd_export(args);
   if (cmd == "import") return cmd_import(args);
+  if (cmd == "health") return cmd_health(args);
   if (cmd == "help" || cmd == "--help" || cmd == "-h") return cmd_help(args);
 
   std::cerr << "Unknown command: " << cmd << std::endl;
@@ -490,9 +510,3 @@ int Cli::run(int argc, char* argv[]) {
 }
 
 }  // namespace telltale
-
-// Optimization pass 40 - memory iteration 1
-
-// Optimization pass 30 - caching iteration 1
-
-// Optimization pass 25 - indexing iteration 1
