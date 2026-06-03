@@ -1,0 +1,11 @@
+/build/
+/telltale
+*.o
+*.a
+*.so
+*.dylib
+.DS_Store
+*.swp
+*~
+scripts/snapshots/
+scripts/build_git_history.sh
