@@ -172,11 +172,11 @@ Result Dispatcher::dispatch_record(const EventRecord& record, ReplayMode mode) {
     return dispatch_payload(record.type_id, record.payload, mode);
 }
 
-Result Dispatcher::replay_file(const std::string& path, ReplayMode mode) {
+Result Dispatcher::replay_from_reader(EventLogReader& reader, ReplayMode mode,
+                                      const char* source_label) {
     reset_stats();
     replay_context_->state().reset_all();
 
-    EventLogReader reader(path);
     Result r = reader.open();
     if (!r.ok()) {
         finalize_report(false, r.message);
@@ -197,8 +197,8 @@ Result Dispatcher::replay_file(const std::string& path, ReplayMode mode) {
     }
 
     if (verbose_ && output_) {
-        *output_ << "Replaying " << path << " (" << header.record_count
-                 << " records)" << std::endl;
+        *output_ << "Replaying " << source_label << " ("
+                 << header.record_count << " records)" << std::endl;
     }
 
     uint32_t index = 0;
@@ -236,6 +236,16 @@ Result Dispatcher::replay_file(const std::string& path, ReplayMode mode) {
     reader.close();
     finalize_report(true);
     return Result::success();
+}
+
+Result Dispatcher::replay_file(const std::string& path, ReplayMode mode) {
+    EventLogReader reader(path);
+    return replay_from_reader(reader, mode, path.c_str());
+}
+
+Result Dispatcher::replay_buffer(const uint8_t* data, size_t length, ReplayMode mode) {
+    EventLogReader reader(data, length);
+    return replay_from_reader(reader, mode, "buffer");
 }
 
 }  // namespace telltale

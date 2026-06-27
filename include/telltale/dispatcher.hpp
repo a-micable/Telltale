@@ -25,6 +25,7 @@ public:
     const HandlerRegistry& registry() const { return registry_; }
 
     Result replay_file(const std::string& path, ReplayMode mode);
+    Result replay_buffer(const uint8_t* data, size_t length, ReplayMode mode);
     Result dispatch_record(const EventRecord& record, ReplayMode mode);
     Result dispatch_payload(uint16_t type_id, const std::vector<uint8_t>& payload,
                             ReplayMode mode);
@@ -80,6 +81,8 @@ private:
     void flush_pending_schema_updates(ReplayMode mode);
     void log_dispatch(uint16_t type_id, size_t payload_len) const;
     void finalize_report(bool success, const std::string& error = "");
+    Result replay_from_reader(EventLogReader& reader, ReplayMode mode,
+                              const char* source_label);
 };
 
 }  // namespace telltale
