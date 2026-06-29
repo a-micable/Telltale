@@ -20,10 +20,14 @@ Dispatcher::Dispatcher()
       crc_errors_(0),
       missing_handlers_(0),
       verify_only_skipped_(0),
-      replay_context_(nullptr) {
+      replay_context_(nullptr),
+      current_replay_mode_(ReplayMode::Execute),
+      cached_handler_entry_(nullptr),
+      cached_handler_type_(0xFFFF) {
     replay_context_ = new ReplayContext();
     replay_context_->set_output(output_);
     replay_context_->set_registry(&registry_);
+    replay_context_->set_inline_dispatcher(&Dispatcher::inline_dispatch_bridge, this);
     registry_.set_handler_resolver(builtin_resolver);
     register_builtin_handlers(registry_, replay_context_);
 }
@@ -74,6 +78,13 @@ void Dispatcher::finalize_report(bool success, const std::string& error) {
     last_report_.verify_only_skipped = verify_only_skipped_;
     last_report_.success = success;
     last_report_.error_message = error;
+}
+
+void Dispatcher::inline_dispatch_bridge(uint16_t type_id, const uint8_t* payload,
+                                       size_t len, void* ctx) {
+    Dispatcher* dispatcher = static_cast<Dispatcher*>(ctx);
+    std::vector<uint8_t> payload_copy(payload, payload + len);
+    dispatcher->dispatch_payload(type_id, payload_copy, dispatcher->current_replay_mode_);
 }
 
 void Dispatcher::flush_pending_schema_updates(ReplayMode mode) {
@@ -134,7 +145,14 @@ Result Dispatcher::invoke_handler(uint16_t type_id, const uint8_t* payload,
         return Result::success();
     }
 
-    const HandlerEntry* entry = registry_.lookup(type_id);
+    const HandlerEntry* entry = nullptr;
+    if (type_id == cached_handler_type_ && cached_handler_entry_ != nullptr) {
+        entry = cached_handler_entry_;
+    } else {
+        entry = registry_.lookup(type_id);
+        cached_handler_type_ = type_id;
+        cached_handler_entry_ = entry;
+    }
     if (entry == nullptr) {
         ++missing_handlers_;
         registry_.invoke_no_handler(type_id);
@@ -154,6 +172,7 @@ Result Dispatcher::invoke_handler(uint16_t type_id, const uint8_t* payload,
 Result Dispatcher::dispatch_payload(uint16_t type_id,
                                      const std::vector<uint8_t>& payload,
                                      ReplayMode mode) {
+    current_replay_mode_ = mode;
     log_dispatch(type_id, payload.size());
 
     if (type_id == SCHEMA_UPDATE_TYPE) {
@@ -176,6 +195,8 @@ Result Dispatcher::replay_from_reader(EventLogReader& reader, ReplayMode mode,
                                       const char* source_label) {
     reset_stats();
     replay_context_->state().reset_all();
+    cached_handler_entry_ = nullptr;
+    cached_handler_type_ = 0xFFFF;
 
     Result r = reader.open();
     if (!r.ok()) {

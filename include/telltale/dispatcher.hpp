@@ -73,12 +73,17 @@ private:
     ProgressCallback progress_callback_;
     ReplayReport last_report_;
     ReplayContext* replay_context_;
+    ReplayMode current_replay_mode_;
+    const HandlerEntry* cached_handler_entry_;
+    uint16_t cached_handler_type_;
     std::vector<std::vector<uint8_t>> pending_schema_updates_;
 
     Result process_schema_update(const std::vector<uint8_t>& payload, ReplayMode mode);
     Result invoke_handler(uint16_t type_id, const uint8_t* payload,
                           size_t payload_len, ReplayMode mode);
     void flush_pending_schema_updates(ReplayMode mode);
+    static void inline_dispatch_bridge(uint16_t type_id, const uint8_t* payload,
+                                       size_t len, void* ctx);
     void log_dispatch(uint16_t type_id, size_t payload_len) const;
     void finalize_report(bool success, const std::string& error = "");
     Result replay_from_reader(EventLogReader& reader, ReplayMode mode,
