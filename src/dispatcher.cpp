@@ -128,7 +128,15 @@ Result Dispatcher::process_schema_update(const std::vector<uint8_t>& payload,
         return Result::success();
     }
 
-    pending_schema_updates_.push_back(payload);
+    Result ar = registry_.apply_schema_update(update);
+    if (!ar.ok()) {
+        return ar;
+    }
+    ++schema_updates_applied_;
+    if (verbose_ && output_) {
+        *output_ << "[schema] applied " << SchemaUpdateCodec::flags_to_string(update.flags)
+                 << " for type 0x" << std::hex << update.type_id << std::dec << std::endl;
+    }
     return Result::success();
 }
 
@@ -183,7 +191,6 @@ Result Dispatcher::dispatch_payload(uint16_t type_id,
 }
 
 Result Dispatcher::dispatch_record(const EventRecord& record, ReplayMode mode) {
-    flush_pending_schema_updates(mode);
     ++records_processed_;
     if (progress_callback_) {
         progress_callback_(records_processed_, record.type_id, record.payload.size());
@@ -195,8 +202,6 @@ Result Dispatcher::replay_from_reader(EventLogReader& reader, ReplayMode mode,
                                       const char* source_label) {
     reset_stats();
     replay_context_->state().reset_all();
-    cached_handler_entry_ = nullptr;
-    cached_handler_type_ = 0xFFFF;
 
     Result r = reader.open();
     if (!r.ok()) {
@@ -243,8 +248,6 @@ Result Dispatcher::replay_from_reader(EventLogReader& reader, ReplayMode mode,
         }
         ++index;
     }
-
-    flush_pending_schema_updates(mode);
 
     if (index != header.record_count) {
         std::string msg = "Record count mismatch: header says " +
