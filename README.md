@@ -362,4 +362,4 @@ This project is provided as-is for demonstration purposes.
 
 ## Fuzzing
 
-ClusterFuzzLite build scripts live under `.clusterfuzzlite/`.
+ClusterFuzzLite build scripts (see build.sh) live under `.clusterfuzzlite/`.
