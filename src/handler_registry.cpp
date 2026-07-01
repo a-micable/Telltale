@@ -5,12 +5,19 @@
 namespace telltale {
 
 HandlerRegistry::HandlerRegistry()
-    : table_(INITIAL_HANDLER_TABLE_SIZE),
+    : table_(INITIAL_HANDLER_TABLE_SIZE, nullptr),
+      slot_live_(INITIAL_HANDLER_TABLE_SIZE, false),
       registration_count_(0),
       max_type_id_(0),
       handler_resolver_(nullptr) {}
 
-HandlerRegistry::~HandlerRegistry() = default;
+HandlerRegistry::~HandlerRegistry() {
+    for (size_t i = 0; i < table_.size(); ++i) {
+        if (slot_live_[i] && table_[i] != nullptr) {
+            delete table_[i];
+        }
+    }
+}
 
 Result HandlerRegistry::validate_type_id(uint16_t type_id) const {
     if (type_id == SCHEMA_UPDATE_TYPE) {
@@ -53,7 +60,13 @@ Result HandlerRegistry::resize_table(size_t new_size) {
         return Result::fail(ErrorCode::HandlerTableFull,
             "Requested table size exceeds maximum");
     }
-    table_.resize(new_size);
+    size_t old_size = table_.size();
+    table_.resize(new_size, nullptr);
+    slot_live_.resize(new_size, false);
+    for (size_t i = old_size; i < new_size; ++i) {
+        table_[i] = nullptr;
+        slot_live_[i] = false;
+    }
     return Result::success();
 }
 
@@ -66,13 +79,17 @@ Result HandlerRegistry::register_handler(uint16_t type_id, HandlerEntry::Handler
     vr = ensure_capacity(type_id);
     if (!vr.ok()) return vr;
 
-    HandlerEntry& entry = table_[type_id];
-    if (entry.is_valid()) {
+    HandlerEntry* existing = table_[type_id];
+    if (existing != nullptr && slot_live_[type_id] && existing->is_valid()) {
         return Result::fail(ErrorCode::HandlerAlreadyRegistered,
             "Handler already registered for type " + std::to_string(type_id));
     }
 
-    entry = HandlerEntry(fn, context, handler_id);
+    if (slot_live_[type_id] && existing != nullptr) {
+        delete existing;
+    }
+    table_[type_id] = new HandlerEntry(fn, context, handler_id);
+    slot_live_[type_id] = true;
     ++registration_count_;
     update_max_type_id(type_id);
     return Result::success();
@@ -86,14 +103,14 @@ Result HandlerRegistry::deregister_handler(uint16_t type_id) {
             "No handler registered for type " + std::to_string(type_id));
     }
 
-    HandlerEntry& entry = table_[type_id];
-    if (!entry.is_valid()) {
-        return Result::fail(ErrorCode::HandlerNotFound,
-            "No handler registered for type " + std::to_string(type_id));
+    HandlerEntry* entry = table_[type_id];
+    if (entry != nullptr) {
+        if (entry->is_valid()) {
+            --registration_count_;
+        }
+        delete entry;
+        slot_live_[type_id] = false;
     }
-
-    entry = HandlerEntry();
-    --registration_count_;
     return Result::success();
 }
 
@@ -106,9 +123,13 @@ Result HandlerRegistry::replace_handler(uint16_t type_id, HandlerEntry::HandlerF
     vr = ensure_capacity(type_id);
     if (!vr.ok()) return vr;
 
-    HandlerEntry& entry = table_[type_id];
-    bool was_active = entry.is_valid();
-    entry = HandlerEntry(fn, context, handler_id);
+    HandlerEntry* existing = table_[type_id];
+    bool was_active = existing != nullptr && slot_live_[type_id] && existing->is_valid();
+    if (slot_live_[type_id] && existing != nullptr) {
+        delete existing;
+    }
+    table_[type_id] = new HandlerEntry(fn, context, handler_id);
+    slot_live_[type_id] = true;
     if (!was_active) {
         ++registration_count_;
     }
@@ -174,22 +195,28 @@ const HandlerEntry* HandlerRegistry::lookup(uint16_t type_id) const {
     if (type_id >= table_.size()) {
         return nullptr;
     }
-    const HandlerEntry& entry = table_[type_id];
-    if (!entry.is_valid()) {
+    if (!slot_live_[type_id]) {
         return nullptr;
     }
-    return &entry;
+    const HandlerEntry* entry = table_[type_id];
+    if (entry == nullptr || !entry->is_valid()) {
+        return nullptr;
+    }
+    return entry;
 }
 
 HandlerEntry* HandlerRegistry::lookup(uint16_t type_id) {
     if (type_id >= table_.size()) {
         return nullptr;
     }
-    HandlerEntry& entry = table_[type_id];
-    if (!entry.is_valid()) {
+    if (!slot_live_[type_id]) {
         return nullptr;
     }
-    return &entry;
+    HandlerEntry* entry = table_[type_id];
+    if (entry == nullptr || !entry->is_valid()) {
+        return nullptr;
+    }
+    return entry;
 }
 
 bool HandlerRegistry::has_handler(uint16_t type_id) const {
@@ -198,8 +225,8 @@ bool HandlerRegistry::has_handler(uint16_t type_id) const {
 
 size_t HandlerRegistry::active_handler_count() const {
     size_t count = 0;
-    for (const auto& entry : table_) {
-        if (entry.is_valid()) {
+    for (size_t i = 0; i < table_.size(); ++i) {
+        if (slot_live_[i] && table_[i] != nullptr && table_[i]->is_valid()) {
             ++count;
         }
     }
@@ -209,7 +236,7 @@ size_t HandlerRegistry::active_handler_count() const {
 std::vector<uint16_t> HandlerRegistry::registered_type_ids() const {
     std::vector<uint16_t> ids;
     for (size_t i = 0; i < table_.size(); ++i) {
-        if (table_[i].is_valid()) {
+        if (slot_live_[i] && table_[i] != nullptr && table_[i]->is_valid()) {
             ids.push_back(static_cast<uint16_t>(i));
         }
     }
@@ -221,8 +248,12 @@ std::vector<uint16_t> HandlerRegistry::active_type_ids() const {
 }
 
 void HandlerRegistry::clear_all() {
-    for (auto& entry : table_) {
-        entry = HandlerEntry();
+    for (size_t i = 0; i < table_.size(); ++i) {
+        if (slot_live_[i] && table_[i] != nullptr) {
+            delete table_[i];
+        }
+        table_[i] = nullptr;
+        slot_live_[i] = false;
     }
     registration_count_ = 0;
     max_type_id_ = 0;
@@ -236,11 +267,11 @@ std::vector<HandlerRegistry::RegistrationInfo>
 HandlerRegistry::list_registrations() const {
     std::vector<RegistrationInfo> result;
     for (size_t i = 0; i < table_.size(); ++i) {
-        if (table_[i].is_valid()) {
+        if (slot_live_[i] && table_[i] != nullptr && table_[i]->is_valid()) {
             RegistrationInfo info;
             info.type_id = static_cast<uint16_t>(i);
-            info.handler_id = table_[i].handler_id;
-            info.active = table_[i].active;
+            info.handler_id = table_[i]->handler_id;
+            info.active = table_[i]->active;
             result.push_back(info);
         }
     }

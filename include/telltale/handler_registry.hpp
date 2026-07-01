@@ -3,6 +3,7 @@
 #include "telltale/types.hpp"
 #include "telltale/errors.hpp"
 #include <vector>
+#include <unordered_map>
 #include <functional>
 #include <string>
 #include <cstdint>
@@ -57,7 +58,8 @@ public:
     void set_handler_resolver(HandlerResolverFn resolver);
 
 private:
-    std::vector<HandlerEntry> table_;
+    std::vector<HandlerEntry*> table_;
+    std::vector<bool> slot_live_;
     size_t registration_count_;
     uint16_t max_type_id_;
     std::function<void(uint16_t)> no_handler_callback_;
