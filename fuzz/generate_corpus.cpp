@@ -47,7 +47,7 @@ int main() {
     int failures = 0;
 
     // 1. Minimal log: header + one counter event.
-  {
+    {
         std::vector<std::pair<uint16_t, std::vector<uint8_t>>> records;
         records.emplace_back(static_cast<uint16_t>(EventType::Counter),
             EventLogWriter::encode_counter_payload("hits", 1, true));
@@ -140,6 +140,27 @@ int main() {
         records.emplace_back(static_cast<uint16_t>(EventType::Batch),
             encode_batch_with_types(batch_subs));
         if (!write_log(corpus_dir + "/06_batch_nested_schema.bin", records)) {
+            ++failures;
+        }
+    }
+
+    // 7. Nested batch: register, warm cache, deregister, reuse cached handler (UAF).
+    {
+        constexpr uint16_t kType = 0x0700;
+        std::vector<std::pair<uint16_t, std::vector<uint8_t>>> batch_subs;
+        batch_subs.emplace_back(SCHEMA_UPDATE_TYPE,
+            schema_payload(static_cast<uint8_t>(SchemaUpdateFlag::Register), kType,
+                           static_cast<uint16_t>(HandlerId::BuiltinPrint)));
+        batch_subs.emplace_back(kType,
+            EventLogWriter::encode_print_payload("warm cache", 1));
+        batch_subs.emplace_back(SCHEMA_UPDATE_TYPE,
+            schema_payload(static_cast<uint8_t>(SchemaUpdateFlag::Deregister), kType, 0));
+        batch_subs.emplace_back(kType,
+            EventLogWriter::encode_print_payload("stale cache", 1));
+        std::vector<std::pair<uint16_t, std::vector<uint8_t>>> records;
+        records.emplace_back(static_cast<uint16_t>(EventType::Batch),
+            encode_batch_with_types(batch_subs));
+        if (!write_log(corpus_dir + "/07_batch_cache_uaf.bin", records)) {
             ++failures;
         }
     }

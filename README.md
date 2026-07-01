@@ -363,3 +363,5 @@ This project is provided as-is for demonstration purposes.
 ## Fuzzing
 
 ClusterFuzzLite build scripts (see build.sh) live under `.clusterfuzzlite/`.
+
+Seed corpus files under `fuzz/corpus/` cover minimal logs, schema updates, double-deregister, and nested batch cache paths. Regenerate with `make corpus`.

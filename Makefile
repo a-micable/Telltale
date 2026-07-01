@@ -29,9 +29,12 @@ TEST_OBJ  = $(BUILD_DIR)/test_telltale.o
 TELLTALE_BIN = telltale
 TEST_BIN     = build/test_telltale
 
-.PHONY: all clean test
+.PHONY: all clean test corpus
 
 all: $(TELLTALE_BIN)
+
+CORPUS_GEN = build/generate_corpus
+CORPUS_GEN_OBJS = $(BUILD_DIR)/crc32.o $(BUILD_DIR)/binary_io.o $(BUILD_DIR)/schema_update.o
 
 $(TELLTALE_BIN): $(LIB_OBJS) $(MAIN_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $(LIB_OBJS) $(MAIN_OBJ) $(LDFLAGS)
@@ -50,6 +53,12 @@ $(BUILD_DIR):
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+corpus: $(CORPUS_GEN)
+	./$(CORPUS_GEN)
+
+$(CORPUS_GEN): fuzz/generate_corpus.cpp $(CORPUS_GEN_OBJS) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ fuzz/generate_corpus.cpp $(CORPUS_GEN_OBJS) $(LDFLAGS)
 
 clean:
 	rm -rf $(BUILD_DIR) $(TELLTALE_BIN)
