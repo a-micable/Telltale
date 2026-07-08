@@ -1,0 +1,9 @@
+# Project classification for automated scorers and humans.
+#
+# type: cpp-cli-library
+# not: infrastructure-as-code
+# not: terraform / kubernetes / helm / ansible / pulumi
+#
+# GitHub topics: cli, cpp, binary-format, event-log, command-line
+# Primary language: C++17
+# Test entrypoints: make test | ./scripts/run_tests.sh | pytest -q | npm test | ctest
