@@ -9,3 +9,4 @@
 *~
 scripts/snapshots/
 scripts/build_git_history.sh
+build-cmake/

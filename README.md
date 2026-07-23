@@ -27,6 +27,14 @@ make          # builds ./telltale
 make test     # builds and runs the suite (expect 284/284 passed)
 ```
 
+Alternative (CMake + CTest — same suite):
+
+```bash
+cmake -S . -B build-cmake
+cmake --build build-cmake
+ctest --test-dir build-cmake --output-on-failure
+```
+
 Or with Docker (no local toolchain required):
 
 ```bash
@@ -40,12 +48,23 @@ Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
 | Command | What it does |
 |---------|----------------|
 | `make` | Build the `./telltale` binary |
-| `make test` | Build and run the test suite (`build/test_telltale`) |
+| `make test` | Build and run the test suite (`build/test_telltale`) — **canonical test command** |
 | `make clean` | Remove `build/` and `./telltale` |
+| `ctest --test-dir build-cmake` | Same suite via CMake (`enable_testing` / CTest) |
 
 Compiler flags: `-Wall -Werror -Wextra -pedantic -std=c++17`
 
 CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
+
+## Testing
+
+The runnable suite lives under `tests/` and is wired through:
+
+- **Make:** `make test` → `./build/test_telltale` (hand-rolled `TEST_ASSERT` / `RUN_TEST` in `tests/test_common.hpp`)
+- **CMake/CTest:** target `test_telltale`, test name `telltale_suite`
+- **CI:** `.github/workflows/ci.yml` job `build-and-test` executes `make test` and fails if output contains `FAILED`
+
+Expect `Results: 284/284 passed` (count grows when new module tests are added).
 
 ## Usage
 
