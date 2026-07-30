@@ -41,6 +41,10 @@ Or with Docker (no local toolchain required):
 docker compose up --build
 ```
 
+## Project Type
+
+Telltale is a **self-contained C++ CLI / library** for binary event logs. It is **not** infrastructure-as-code tooling. There is no Terraform, Kubernetes, Helm, Ansible, or Pulumi in this repository **by design**; packaging is Make/CMake plus an optional Docker image for isolated runs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Build
 
 Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
