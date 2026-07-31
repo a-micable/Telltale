@@ -10,7 +10,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (284 tests)
+- Comprehensive test suite (299 tests)
 
 ## Quick start (fresh clone)
 
@@ -53,6 +53,7 @@ Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
 |---------|----------------|
 | `make` | Build the `./telltale` binary |
 | `make test` | Build and run the test suite (`build/test_telltale`) — **canonical test command** |
+| `make coverage` | Rebuild with gcov flags, run tests, emit `coverage/index.html` (fails if core line coverage &lt; 70%) |
 | `make clean` | Remove `build/` and `./telltale` |
 | `ctest --test-dir build-cmake` | Same suite via CMake (`enable_testing` / CTest) |
 
