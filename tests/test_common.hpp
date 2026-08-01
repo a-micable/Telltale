@@ -66,3 +66,4 @@ void run_binary_io_tests();
 void run_dispatcher_tests();
 void run_filter_engine_tests();
 void run_text_format_tests();
+void run_cli_validation_tests();
