@@ -62,8 +62,15 @@ inline std::string temp_path(const std::string& name) {
 
 using namespace telltale;
 
-void run_binary_io_tests();
-void run_dispatcher_tests();
+void run_crc32_tests();
+void run_writer_tests();
+void run_payload_roundtrip_tests();
+void run_endian_tests();
+void run_event_roundtrip_tests();
+void run_schema_tests();
+void run_registry_tests();
+void run_state_crc_tests();
+void run_multi_event_tests();
 void run_filter_engine_tests();
 void run_text_format_tests();
 void run_cli_validation_tests();

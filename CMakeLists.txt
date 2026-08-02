@@ -32,10 +32,18 @@ set_target_properties(telltale-cli PROPERTIES OUTPUT_NAME telltale)
 # Hand-rolled suite (same sources as `make test`). No third-party test framework.
 set(TELLTALE_TEST_SOURCES
   tests/test_common.cpp
-  tests/test_binary_io.cpp
-  tests/test_dispatcher.cpp
+  tests/test_crc32.cpp
+  tests/test_writer.cpp
+  tests/test_payload_roundtrip.cpp
+  tests/test_endian.cpp
+  tests/test_event_roundtrip.cpp
+  tests/test_schema.cpp
+  tests/test_registry.cpp
+  tests/test_state_crc.cpp
+  tests/test_multi_event.cpp
   tests/test_filter_engine.cpp
   tests/test_text_format.cpp
+  tests/test_cli_validation.cpp
   tests/test_telltale.cpp
 )
 

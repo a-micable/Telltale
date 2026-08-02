@@ -27,8 +27,15 @@ MAIN_SRC = $(SRC_DIR)/main.cpp
 # Hand-rolled suite only (ignore unrelated gtest stubs under tests/).
 TEST_SRCS = \
 	$(TEST_DIR)/test_common.cpp \
-	$(TEST_DIR)/test_binary_io.cpp \
-	$(TEST_DIR)/test_dispatcher.cpp \
+	$(TEST_DIR)/test_crc32.cpp \
+	$(TEST_DIR)/test_writer.cpp \
+	$(TEST_DIR)/test_payload_roundtrip.cpp \
+	$(TEST_DIR)/test_endian.cpp \
+	$(TEST_DIR)/test_event_roundtrip.cpp \
+	$(TEST_DIR)/test_schema.cpp \
+	$(TEST_DIR)/test_registry.cpp \
+	$(TEST_DIR)/test_state_crc.cpp \
+	$(TEST_DIR)/test_multi_event.cpp \
 	$(TEST_DIR)/test_filter_engine.cpp \
 	$(TEST_DIR)/test_text_format.cpp \
 	$(TEST_DIR)/test_cli_validation.cpp \
