@@ -24,7 +24,7 @@ sudo apt-get install -y build-essential
 git clone <repo-url> telltale
 cd telltale
 make          # builds ./telltale
-make test     # builds and runs the suite (expect 284/284 passed)
+make test     # builds and runs the suite (expect 299/299 passed)
 ```
 
 Alternative (CMake + CTest — same suite):
@@ -69,7 +69,7 @@ The runnable suite lives under `tests/` and is wired through:
 - **CMake/CTest:** target `test_telltale`, test name `telltale_suite`
 - **CI:** `.github/workflows/ci.yml` job `build-and-test` executes `make test` and fails if output contains `FAILED`
 
-Expect `Results: 284/284 passed` (count grows when new module tests are added).
+Expect `Results: 299/299 passed` (count grows when new module tests are added).
 
 ## Usage
 
