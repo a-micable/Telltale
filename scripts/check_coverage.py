@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/ usr / bin / env python3
 """Fail if lcov summary line coverage is below a threshold percent."""
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ def main() -> int:
     path = Path(sys.argv[1])
     min_pct = float(sys.argv[2])
     text = path.read_text(errors="replace")
-    # Prefer overall LF/LH totals from the record stream.
+#Prefer overall LF / LH totals from the record stream.
     lines_found = 0
     lines_hit = 0
     for m in re.finditer(r"^LF:(\d+)$", text, re.M):

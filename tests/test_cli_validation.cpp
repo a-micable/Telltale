@@ -1,7 +1,7 @@
-#include "test_common.hpp"
-
 #include <cstring>
 #include <vector>
+
+#include "test_common.hpp"
 
 static std::vector<char*> make_argv(std::vector<std::string>& storage) {
   std::vector<char*> argv;
@@ -135,8 +135,8 @@ static bool test_cli_filter_type_range() {
     TEST_ASSERT(Cli::run(static_cast<int>(argv.size()), argv.data()) == 0);
   }
   {
-    std::vector<std::string> storage = {"telltale", "filter", in_path, out_path, "--type-min",
-                                       "1", "--type-max", "1"};
+    std::vector<std::string> storage = {"telltale",   "filter", in_path,      out_path,
+                                        "--type-min", "1",      "--type-max", "1"};
     auto argv = make_argv(storage);
     TEST_ASSERT(Cli::run(static_cast<int>(argv.size()), argv.data()) == 0);
   }
