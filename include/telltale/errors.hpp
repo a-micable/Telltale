@@ -132,7 +132,7 @@ struct Result {
   std::string message;
 
   Result() : code(ErrorCode::Ok) {}
-  Result(ErrorCode c, const std::string& msg = "") : code(c), message(msg) {}
+  explicit Result(ErrorCode c, const std::string& msg = "") : code(c), message(msg) {}
 
   bool ok() const { return code == ErrorCode::Ok; }
   explicit operator bool() const { return ok(); }

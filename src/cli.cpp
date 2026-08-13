@@ -1,5 +1,6 @@
 #include "telltale/cli.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -28,10 +29,7 @@ std::vector<std::string> Cli::parse_args(int argc, char* argv[]) {
 }
 
 bool Cli::has_flag(const std::vector<std::string>& args, const std::string& flag) {
-  for (const auto& a : args) {
-    if (a == flag) return true;
-  }
-  return false;
+  return std::any_of(args.begin(), args.end(), [&](const std::string& a) { return a == flag; });
 }
 
 std::string Cli::get_flag_value(const std::vector<std::string>& args, const std::string& flag,
