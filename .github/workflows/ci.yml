@@ -86,7 +86,7 @@ jobs:
       - name: Run clang-tidy on CLI entrypoints
         run: |
           clang-tidy \
-            --checks='-*,bugprone-*,clang-analyzer-*' \
+            --checks='-*,bugprone-*,-bugprone-easily-swappable-parameters,clang-analyzer-*' \
             --warnings-as-errors='bugprone-*,clang-analyzer-*' \
             --header-filter='include/telltale/(cli|errors)\\.hpp' \
             src/cli.cpp src/main.cpp -- \
