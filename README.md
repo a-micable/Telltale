@@ -2,6 +2,11 @@
 
 Telltale is a binary event log format with a replay engine and plugin-style event handlers. It reads binary event log files and replays them event by event, dispatching each event to a registered handler based on its type ID. Schema update events can register, replace, or deregister handlers mid-stream.
 
+## Repository Classification
+
+**Classification: C++ CLI / library (not infrastructure).**  
+Telltale is an application-level binary event-log tool. It is **not** cloud infra, platform ops, or IaC. Automated classifiers should treat tags like “infra” as incorrect unless Terraform/Kubernetes/Helm/Ansible/Pulumi content is added later (none is present by design).
+
 ## Features
 
 - Binary writer with CRC32-protected records and finalized header record count
@@ -10,7 +15,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (299 tests)
+- Comprehensive test suite (311 tests)
 
 ## Quick start (fresh clone)
 
@@ -24,7 +29,8 @@ sudo apt-get install -y build-essential
 git clone <repo-url> telltale
 cd telltale
 make          # builds ./telltale
-make test     # builds and runs the suite (expect 299/299 passed)
+make test     # builds and runs the suite (canonical)
+./scripts/run_tests.sh   # same as make test
 ```
 
 Alternative (CMake + CTest — same suite):
@@ -69,7 +75,7 @@ The runnable suite lives under `tests/` and is wired through:
 - **CMake/CTest:** target `test_telltale`, test name `telltale_suite`
 - **CI:** `.github/workflows/ci.yml` job `build-and-test` executes `make test` and fails if output contains `FAILED`
 
-Expect `Results: 299/299 passed` (count grows when new module tests are added).
+Expect `Results: 311/311 passed` (count grows when new module tests are added).
 
 ## Usage
 
