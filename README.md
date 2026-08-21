@@ -393,7 +393,12 @@ src/
   main.cpp            Entry point
 
 tests/
-  test_telltale.cpp   Test suite
+  test_common.hpp/.cpp Shared TEST_ASSERT / RUN_TEST helpers
+  test_binary_io.cpp   Binary I/O and CRC tests
+  test_dispatcher.cpp  Dispatcher, schema, and registry tests
+  test_filter_engine.cpp Filter engine tests
+  test_text_format.cpp Text export/import tests
+  test_telltale.cpp    Suite entrypoint
 ```
 
 ## License
