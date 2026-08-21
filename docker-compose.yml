@@ -1,0 +1,20 @@
+# One-command startup: builds telltale in an isolated container and runs a
+# short write → verify → replay demo. No external databases or services.
+services:
+  telltale:
+    build: .
+    image: telltale:local
+    working_dir: /work
+    volumes:
+      - telltale-data:/work
+    entrypoint: ["/bin/bash", "-lc"]
+    command:
+      - |
+        set -euo pipefail
+        /app/telltale write /work/sample.tlog --events 20
+        /app/telltale verify /work/sample.tlog
+        /app/telltale replay /work/sample.tlog
+        echo "telltale is up: sample.tlog written, verified, and replayed"
+
+volumes:
+  telltale-data:
