@@ -1,6 +1,6 @@
 CXX      = g++
 CXXFLAGS = -Wall -Werror -Wextra -pedantic -std=c++17 -Iinclude -Itests
-LDFLAGS  =
+LDFLAGS  = -pthread
 COVERAGE_CFLAGS = -fprofile-arcs -ftest-coverage -O0 -g
 COVERAGE_LDFLAGS = --coverage
 
@@ -17,14 +17,18 @@ LIB_SRCS = \
 	$(SRC_DIR)/dispatcher.cpp \
 	$(SRC_DIR)/builtin_handlers.cpp \
 	$(SRC_DIR)/filter_engine.cpp \
+	$(SRC_DIR)/payload_fields.cpp \
 	$(SRC_DIR)/diff_engine.cpp \
 	$(SRC_DIR)/compaction_engine.cpp \
-	$(SRC_DIR)/text_format.cpp \
+	$(SRC_DIR)/text_export.cpp \
+	$(SRC_DIR)/text_import.cpp \
+	$(SRC_DIR)/network.cpp \
+	$(SRC_DIR)/storage_backends.cpp \
 	$(SRC_DIR)/cli.cpp
 
 MAIN_SRC = $(SRC_DIR)/main.cpp
 
-# Hand-rolled suite only (ignore unrelated gtest stubs under tests/).
+# Runnable suite: tests/test_*.cpp plus GoogleTest-compatible macros via tests/gtest/gtest.h
 TEST_SRCS = \
 	$(TEST_DIR)/test_common.cpp \
 	$(TEST_DIR)/test_crc32.cpp \
@@ -43,6 +47,9 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_compaction_engine.cpp \
 	$(TEST_DIR)/test_text_format.cpp \
 	$(TEST_DIR)/test_cli_validation.cpp \
+	$(TEST_DIR)/test_logging.cpp \
+	$(TEST_DIR)/test_managers.cpp \
+	$(TEST_DIR)/test_fresh_clone.cpp \
 	$(TEST_DIR)/test_telltale.cpp
 
 LIB_OBJS  = $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(LIB_SRCS))
@@ -52,7 +59,7 @@ TEST_OBJS = $(patsubst $(TEST_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(TEST_SRCS))
 TELLTALE_BIN = telltale
 TEST_BIN     = build/test_telltale
 
-.PHONY: all clean test corpus coverage
+.PHONY: all clean test check corpus coverage
 
 all: $(TELLTALE_BIN)
 
@@ -74,8 +81,11 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.cpp | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
+# Canonical test command (also used by ./scripts/run_tests.sh and CI).
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+check: test
 
 # Rebuild the suite with gcov flags, run it, and emit an HTML + summary report.
 # Fails if line coverage of linked library sources drops below 70%.
