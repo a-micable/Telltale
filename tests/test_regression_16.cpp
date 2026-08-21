@@ -1,4 +1,2 @@
 // Regression tests test 16
-TEST(Telltale, RegressionTest16) {
-    EXPECT_TRUE(true);
-}
+TEST(Telltale, RegressionTest16) { EXPECT_TRUE(true); }

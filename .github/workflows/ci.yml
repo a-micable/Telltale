@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install g++
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential
+
+      - name: Build
+        run: make
+
+      - name: Run tests
+        run: |
+          set -o pipefail
+          make test 2>&1 | tee test-output.txt
+          if grep -q FAILED test-output.txt; then
+            echo "Test suite reported FAILED"
+            exit 1
+          fi
+          grep -q "284/284 passed" test-output.txt
+
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          python3 -m pip install --user 'clang-format==22.1.8'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Check formatting
+        run: |
+          set -euo pipefail
+          clang-format --version
+          mapfile -t files < <(find src include tests -type f \( -name '*.cpp' -o -name '*.hpp' \) | sort)
+          clang-format --dry-run --Werror "${files[@]}"

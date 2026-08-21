@@ -10,19 +10,42 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (276 tests)
+- Comprehensive test suite (284 tests)
+
+## Quick start (fresh clone)
+
+Telltale has **no third-party package dependencies** and no lockfile to commit. A machine with a C++17 toolchain is enough.
+
+```bash
+# Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install -y build-essential
+
+git clone <repo-url> telltale
+cd telltale
+make          # builds ./telltale
+make test     # builds and runs the suite (expect 284/284 passed)
+```
+
+Or with Docker (no local toolchain required):
+
+```bash
+docker compose up --build
+```
 
 ## Build
 
-Requirements: g++ with C++17 support.
+Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
 
-```bash
-make          # builds ./telltale
-make test     # builds and runs the test suite
-make clean    # removes build artifacts
-```
+| Command | What it does |
+|---------|----------------|
+| `make` | Build the `./telltale` binary |
+| `make test` | Build and run the test suite (`build/test_telltale`) |
+| `make clean` | Remove `build/` and `./telltale` |
 
 Compiler flags: `-Wall -Werror -Wextra -pedantic -std=c++17`
+
+CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
 
 ## Usage
 
@@ -320,6 +343,23 @@ Flags (exactly one must be set):
 | 0x0008 | BuiltinStats     |
 | 0x00FF | BuiltinNoOp      |
 
+## Architecture
+
+Modules wired into the CLI (`include/telltale/cli.hpp` / `src/cli.cpp`):
+
+| Module | Role |
+|--------|------|
+| `binary_io` | Binary event log reader/writer with CRC32-protected records |
+| `dispatcher` | Replay engine; dispatches each record to a registered handler |
+| `handler_registry` | Flat handler table (function pointer + context per type ID) |
+| `schema_update` | Mid-stream register / replace / deregister of handlers |
+| `filter_engine` | Filter records by type, time, and payload fields |
+| `diff_engine` | LCS-based record and field-level log comparison |
+| `compaction_engine` | Compact logs (drop superseded key-values, etc.) |
+| `text_format` | Human-readable export/import of binary logs |
+
+Supporting pieces used by those modules: `crc32`, `builtin_handlers`, `types`, `errors`.
+
 ## Project Structure
 
 ```
@@ -353,7 +393,12 @@ src/
   main.cpp            Entry point
 
 tests/
-  test_telltale.cpp   Test suite
+  test_common.hpp/.cpp Shared TEST_ASSERT / RUN_TEST helpers
+  test_binary_io.cpp   Binary I/O and CRC tests
+  test_dispatcher.cpp  Dispatcher, schema, and registry tests
+  test_filter_engine.cpp Filter engine tests
+  test_text_format.cpp Text export/import tests
+  test_telltale.cpp    Suite entrypoint
 ```
 
 ## License

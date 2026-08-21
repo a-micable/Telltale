@@ -1,4 +1,4 @@
 // Monitoring infrastructure implementation 17
 void monitoring_handler_17() {
-    // Implementation details here
+  // Implementation details here
 }
