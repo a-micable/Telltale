@@ -29,6 +29,8 @@ TEST(Health, ReportIsOkJson) {
   const std::string json = format_health_report_json(report);
   EXPECT_TRUE(json.find("\"status\":\"ok\"") != std::string::npos);
   EXPECT_TRUE(json.find("\"logging_ready\":true") != std::string::npos);
+  EXPECT_TRUE(json.find("logging_framework") != std::string::npos);
+  EXPECT_TRUE(json.find("telltale_structured_logger") != std::string::npos);
   return true;
 }
 

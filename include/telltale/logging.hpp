@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstdlib>
 #include <ctime>
@@ -35,9 +37,8 @@ class Logger {
     const char* raw = std::getenv("TELLTALE_LOG_LEVEL");
     if (!raw || !*raw) return;
     std::string v(raw);
-    for (char& c : v) {
-      if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
-    }
+    std::transform(v.begin(), v.end(), v.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     if (v == "warn" || v == "warning") {
       set_level(LogLevel::Warn);
     } else if (v == "error" || v == "err") {
