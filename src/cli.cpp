@@ -5,6 +5,7 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "telltale/binary_io.hpp"
 #include "telltale/builtin_handlers.hpp"
@@ -12,19 +13,35 @@
 #include "telltale/crc32.hpp"
 #include "telltale/diff_engine.hpp"
 #include "telltale/dispatcher.hpp"
+#include "telltale/error_tracking.hpp"
 #include "telltale/filter_engine.hpp"
 #include "telltale/health.hpp"
 #include "telltale/logging.hpp"
+#include "telltale/metrics.hpp"
 #include "telltale/schema_update.hpp"
 #include "telltale/text_format.hpp"
 #include "telltale/validation.hpp"
 
 namespace telltale {
 
-static void print_banner() {
-  log().info("cli", "Telltale Event Log Tool v1.0");
-  std::cout << "Telltale Event Log Tool v1.0" << std::endl;
+namespace {
+
+void cli_out(const std::string& message) { log().info("cli", message); }
+
+void cli_err(const std::string& message) {
+  error_tracking().record(ErrorCode::InvalidPayload, message, "cli");
+  log().error("cli", message);
 }
+
+void report_validation_failure(const Result& r) {
+  metrics().inc_validation_failures();
+  error_tracking().record(r.code, r.message, "validation");
+  log().error("validation", r.message);
+}
+
+}  // namespace
+
+static void print_banner() { cli_out("Telltale Event Log Tool v1.0"); }
 
 std::vector<std::string> Cli::parse_args(int argc, char* argv[]) {
   std::vector<std::string> args;
@@ -49,84 +66,81 @@ std::string Cli::get_flag_value(const std::vector<std::string>& args, const std:
 }
 
 void Cli::print_usage() {
-  std::cout << "Usage: telltale <command> [options]" << std::endl;
-  std::cout << std::endl;
-  std::cout << "Commands:" << std::endl;
-  std::cout << "  write   Generate a sample event log file" << std::endl;
-  std::cout << "  replay  Replay an event log file with handler execution" << std::endl;
-  std::cout << "  verify  Verify CRC32 and schema without executing handlers" << std::endl;
-  std::cout << "  filter  Filter records from a log into a new log file" << std::endl;
-  std::cout << "  diff    Compare two log files and print a diff report" << std::endl;
-  std::cout << "  compact Merge multiple log files into one output file" << std::endl;
-  std::cout << "  export  Export a binary log to plain-text format" << std::endl;
-  std::cout << "  import  Import a plain-text log back to binary format" << std::endl;
-  std::cout << "  health  Print JSON health status for automation" << std::endl;
-  std::cout << "  help    Show this help message" << std::endl;
+  cli_out("Usage: telltale <command> [options]");
+  cli_out("");
+  cli_out("Commands:");
+  cli_out("  write   Generate a sample event log file");
+  cli_out("  replay  Replay an event log file with handler execution");
+  cli_out("  verify  Verify CRC32 and schema without executing handlers");
+  cli_out("  filter  Filter records from a log into a new log file");
+  cli_out("  diff    Compare two log files and print a diff report");
+  cli_out("  compact Merge multiple log files into one output file");
+  cli_out("  export  Export a binary log to plain-text format");
+  cli_out("  import  Import a plain-text log back to binary format");
+  cli_out("  health  Print JSON health status for automation");
+  cli_out("  help    Show this help message");
 }
 
 void Cli::print_write_usage() {
-  std::cout << "Usage: telltale write <output-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --events N    Number of events to generate (default: 20)" << std::endl;
-  std::cout << "  --verbose     Enable verbose output" << std::endl;
+  cli_out("Usage: telltale write <output-file> [options]");
+  cli_out("Options:");
+  cli_out("  --events N    Number of events to generate (default: 20)");
+  cli_out("  --verbose     Enable verbose output");
 }
 
 void Cli::print_replay_usage() {
-  std::cout << "Usage: telltale replay <input-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --verbose     Enable verbose handler output" << std::endl;
+  cli_out("Usage: telltale replay <input-file> [options]");
+  cli_out("Options:");
+  cli_out("  --verbose     Enable verbose handler output");
 }
 
 void Cli::print_verify_usage() {
-  std::cout << "Usage: telltale verify <input-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --verbose     Enable verbose verification output" << std::endl;
+  cli_out("Usage: telltale verify <input-file> [options]");
+  cli_out("Options:");
+  cli_out("  --verbose     Enable verbose verification output");
 }
 
 void Cli::print_filter_usage() {
-  std::cout << "Usage: telltale filter <input-file> <output-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --type ID         Match exact type ID (hex or decimal)" << std::endl;
-  std::cout << "  --type-min ID     Minimum type ID (inclusive)" << std::endl;
-  std::cout << "  --type-max ID     Maximum type ID (inclusive)" << std::endl;
-  std::cout << "  --time-min MS     Minimum timestamp (epoch millis)" << std::endl;
-  std::cout << "  --time-max MS     Maximum timestamp (epoch millis)" << std::endl;
-  std::cout << "  --field NAME OP VALUE   Payload field filter (op: eq,ne,gt,lt,contains)"
-            << std::endl;
-  std::cout << "  --combine and|or  Combine field filters (default: and)" << std::endl;
-  std::cout << "  --no-schema       Exclude schema update events" << std::endl;
-  std::cout << "  --explain         Print filter statistics" << std::endl;
-  std::cout << "  --verbose         Verbose output" << std::endl;
+  cli_out("Usage: telltale filter <input-file> <output-file> [options]");
+  cli_out("Options:");
+  cli_out("  --type ID         Match exact type ID (hex or decimal)");
+  cli_out("  --type-min ID     Minimum type ID (inclusive)");
+  cli_out("  --type-max ID     Maximum type ID (inclusive)");
+  cli_out("  --time-min MS     Minimum timestamp (epoch millis)");
+  cli_out("  --time-max MS     Maximum timestamp (epoch millis)");
+  cli_out("  --field NAME OP VALUE   Payload field filter (op: eq,ne,gt,lt,contains)");
+  cli_out("  --combine and|or  Combine field filters (default: and)");
+  cli_out("  --no-schema       Exclude schema update events");
+  cli_out("  --explain         Print filter statistics");
+  cli_out("  --verbose         Verbose output");
 }
 
 void Cli::print_diff_usage() {
-  std::cout << "Usage: telltale diff <left-file> <right-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --verbose     Show equal records in addition to changes" << std::endl;
+  cli_out("Usage: telltale diff <left-file> <right-file> [options]");
+  cli_out("Options:");
+  cli_out("  --verbose     Show equal records in addition to changes");
 }
 
 void Cli::print_compact_usage() {
-  std::cout << "Usage: telltale compact <output-file> <input-file> [more-inputs...] [options]"
-            << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --no-dedupe-reset   Keep consecutive duplicate reset events" << std::endl;
-  std::cout << "  --verify-output     Verify output file after compaction" << std::endl;
-  std::cout << "  --verbose           Verbose output" << std::endl;
+  cli_out("Usage: telltale compact <output-file> <input-file> [more-inputs...] [options]");
+  cli_out("Options:");
+  cli_out("  --no-dedupe-reset   Keep consecutive duplicate reset events");
+  cli_out("  --verify-output     Verify output file after compaction");
+  cli_out("  --verbose           Verbose output");
 }
 
 void Cli::print_export_usage() {
-  std::cout << "Usage: telltale export <input-file> <output-file> [options]" << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --raw-hex     Include raw hex payload for unknown types" << std::endl;
-  std::cout << "  --verbose     Verbose output" << std::endl;
+  cli_out("Usage: telltale export <input-file> <output-file> [options]");
+  cli_out("Options:");
+  cli_out("  --raw-hex     Include raw hex payload for unknown types");
+  cli_out("  --verbose     Verbose output");
 }
 
 void Cli::print_import_usage() {
-  std::cout << "Usage: telltale import <input-text-file> <output-binary-file> [options]"
-            << std::endl;
-  std::cout << "Options:" << std::endl;
-  std::cout << "  --lenient     Continue on parse errors where possible" << std::endl;
-  std::cout << "  --verbose     Verbose output" << std::endl;
+  cli_out("Usage: telltale import <input-text-file> <output-binary-file> [options]");
+  cli_out("Options:");
+  cli_out("  --lenient     Continue on parse errors where possible");
+  cli_out("  --verbose     Verbose output");
 }
 
 std::vector<std::string> Cli::collect_positional(const std::vector<std::string>& args,
@@ -161,17 +175,17 @@ int generate_sample_log(const std::string& output_path, size_t event_count, bool
   EventLogWriter writer(output_path);
   Result r = writer.open();
   if (!r.ok()) {
-    std::cerr << "Error: " << r.message << std::endl;
+    cli_err(std::string("Error: ") + r.message);
     return 1;
   }
   r = writer.write_header();
   if (!r.ok()) {
-    std::cerr << "Error: " << r.message << std::endl;
+    cli_err(std::string("Error: ") + r.message);
     return 1;
   }
 
   if (verbose) {
-    std::cout << "Writing sample log to " << output_path << std::endl;
+    cli_out(std::string("Writing sample log to ") + output_path);
   }
 
   writer.write_event(static_cast<uint16_t>(EventType::Print),
@@ -236,12 +250,13 @@ int generate_sample_log(const std::string& output_path, size_t event_count, bool
 
   r = writer.finalize();
   if (!r.ok()) {
-    std::cerr << "Error finalizing: " << r.message << std::endl;
+    cli_err(std::string("Error finalizing: ") + r.message);
     return 1;
   }
 
+  metrics().inc_records_written(writer.record_count());
   if (verbose) {
-    std::cout << "Wrote " << writer.record_count() << " records" << std::endl;
+    cli_out(std::string("Wrote ") + std::to_string(writer.record_count()) + " records");
   }
   return 0;
 }
@@ -254,7 +269,7 @@ int Cli::cmd_write(const std::vector<std::string>& args) {
   std::string output = args[2];
   Result vr = validate_output_path(output);
   if (!vr.ok()) {
-    std::cerr << "Validation error: " << vr.message << std::endl;
+    report_validation_failure(vr);
     return 1;
   }
   size_t event_count = 20;
@@ -272,7 +287,7 @@ int Cli::cmd_replay(const std::vector<std::string>& args) {
   std::string input = args[2];
   Result vr = validate_input_path(input);
   if (!vr.ok()) {
-    std::cerr << "Validation error: " << vr.message << std::endl;
+    report_validation_failure(vr);
     return 1;
   }
   bool verbose = has_flag(args, "--verbose");
@@ -281,14 +296,15 @@ int Cli::cmd_replay(const std::vector<std::string>& args) {
   dispatcher.set_verbose(verbose);
   Result r = dispatcher.replay_file(input, ReplayMode::Execute);
   if (!r.ok()) {
-    std::cerr << "Replay failed: " << r.message << std::endl;
+    cli_err(std::string("Replay failed: ") + r.message);
     return 1;
   }
 
   const auto& report = dispatcher.last_report();
-  std::cout << "Replay complete: " << report.records_processed << " records, "
-            << report.handlers_invoked << " handlers invoked, " << report.schema_updates
-            << " schema updates" << std::endl;
+  std::ostringstream oss;
+  oss << "Replay complete: " << report.records_processed << " records, " << report.handlers_invoked
+      << " handlers invoked, " << report.schema_updates << " schema updates";
+  cli_out(oss.str());
   return 0;
 }
 
@@ -298,20 +314,26 @@ int Cli::cmd_verify(const std::vector<std::string>& args) {
     return 1;
   }
   std::string input = args[2];
+  Result vr = validate_input_path(input);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
 
   Dispatcher dispatcher;
   dispatcher.set_verbose(verbose);
   Result r = dispatcher.replay_file(input, ReplayMode::VerifyOnly);
   if (!r.ok()) {
-    std::cerr << "Verify failed: " << r.message << std::endl;
+    cli_err(std::string("Verify failed: ") + r.message);
     return 1;
   }
 
   const auto& report = dispatcher.last_report();
-  std::cout << "Verify OK: " << report.records_processed << " records, " << report.schema_updates
-            << " schema updates validated, " << report.missing_handlers << " unhandled types"
-            << std::endl;
+  std::ostringstream oss;
+  oss << "Verify OK: " << report.records_processed << " records, " << report.schema_updates
+      << " schema updates validated, " << report.missing_handlers << " unhandled types";
+  cli_out(oss.str());
   return 0;
 }
 
@@ -322,32 +344,44 @@ int Cli::cmd_filter(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
+  Result vr = validate_input_path(input);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = validate_output_path(output);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
   bool explain = has_flag(args, "--explain");
 
   FilterEngine engine;
   Result r = engine.load(input);
   if (!r.ok()) {
-    std::cerr << "Filter load failed: " << r.message << std::endl;
+    cli_err(std::string("Filter load failed: ") + r.message);
     return 1;
   }
   FilterCriteria criteria = FilterEngine::parse_criteria_from_args(args);
   engine.set_criteria(criteria);
   r = engine.run_filter();
   if (!r.ok()) {
-    std::cerr << "Filter failed: " << r.message << std::endl;
+    cli_err(std::string("Filter failed: ") + r.message);
     return 1;
   }
   r = engine.write_matches(output);
   if (!r.ok()) {
-    std::cerr << "Filter write failed: " << r.message << std::endl;
+    cli_err(std::string("Filter write failed: ") + r.message);
     return 1;
   }
   if (verbose || explain) {
-    std::cout << filter_engine_explain(engine) << std::endl;
+    cli_out(filter_engine_explain(engine));
   }
-  std::cout << "Filter: " << engine.match_count() << " of " << engine.total_records_loaded()
-            << " records written to " << output << std::endl;
+  std::ostringstream oss;
+  oss << "Filter: " << engine.match_count() << " of " << engine.total_records_loaded()
+      << " records written to " << output;
+  cli_out(oss.str());
   return 0;
 }
 
@@ -358,26 +392,36 @@ int Cli::cmd_diff(const std::vector<std::string>& args) {
   }
   std::string left = args[2];
   std::string right = args[3];
+  Result vr = validate_input_path(left);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = validate_input_path(right);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
 
   DiffEngine engine;
   Result r = engine.load_left(left);
   if (!r.ok()) {
-    std::cerr << "Diff load left failed: " << r.message << std::endl;
+    cli_err(std::string("Diff load left failed: ") + r.message);
     return 1;
   }
   r = engine.load_right(right);
   if (!r.ok()) {
-    std::cerr << "Diff load right failed: " << r.message << std::endl;
+    cli_err(std::string("Diff load right failed: ") + r.message);
     return 1;
   }
   r = engine.compare();
   if (!r.ok()) {
-    std::cerr << "Diff compare failed: " << r.message << std::endl;
+    cli_err(std::string("Diff compare failed: ") + r.message);
     return 1;
   }
-  std::cout << engine.format_report(verbose) << std::endl;
-  std::cout << diff_engine_summary_line(engine) << std::endl;
+  cli_out(engine.format_report(verbose));
+  cli_out(diff_engine_summary_line(engine));
   return 0;
 }
 
@@ -388,6 +432,11 @@ int Cli::cmd_compact(const std::vector<std::string>& args) {
     return 1;
   }
   std::string output = positional[0];
+  Result vr = validate_output_path(output);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
   bool verify_output = has_flag(args, "--verify-output");
 
@@ -399,32 +448,37 @@ int Cli::cmd_compact(const std::vector<std::string>& args) {
   for (size_t i = 1; i < positional.size(); ++i) {
     Result r = engine.add_input(positional[i], static_cast<uint32_t>(i));
     if (!r.ok()) {
-      std::cerr << "Compact add input failed: " << r.message << std::endl;
+      cli_err(std::string("Compact add input failed: ") + r.message);
       return 1;
     }
   }
 
   Result r = engine.compact(output);
   if (!r.ok()) {
-    std::cerr << "Compact failed: " << r.message << std::endl;
+    cli_err(std::string("Compact failed: ") + r.message);
     return 1;
   }
 
   if (verify_output) {
     r = compaction_verify_output(output, engine.stats());
     if (!r.ok()) {
-      std::cerr << "Output verification failed: " << r.message << std::endl;
+      cli_err(std::string("Output verification failed: ") + r.message);
       return 1;
     }
   }
 
   const auto& stats = engine.stats();
+  metrics().inc_records_written(stats.output_records);
   if (verbose) {
-    std::cout << "Compacted " << stats.input_files << " files, " << stats.input_records_total
-              << " input records -> " << stats.output_records << " output records, "
-              << stats.resets_deduped << " resets deduped" << std::endl;
+    std::ostringstream oss;
+    oss << "Compacted " << stats.input_files << " files, " << stats.input_records_total
+        << " input records -> " << stats.output_records << " output records, "
+        << stats.resets_deduped << " resets deduped";
+    cli_out(oss.str());
   } else {
-    std::cout << "Compact OK: " << stats.output_records << " records -> " << output << std::endl;
+    std::ostringstream oss;
+    oss << "Compact OK: " << stats.output_records << " records -> " << output;
+    cli_out(oss.str());
   }
   return 0;
 }
@@ -436,6 +490,16 @@ int Cli::cmd_export(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
+  Result vr = validate_input_path(input);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = validate_output_path(output);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
 
   TextExporter exporter;
@@ -443,10 +507,12 @@ int Cli::cmd_export(const std::vector<std::string>& args) {
   exporter.set_verbose(verbose);
   Result r = exporter.export_file(input, output);
   if (!r.ok()) {
-    std::cerr << "Export failed: " << r.message << std::endl;
+    cli_err(std::string("Export failed: ") + r.message);
     return 1;
   }
-  std::cout << "Exported " << exporter.records_exported() << " records to " << output << std::endl;
+  std::ostringstream oss;
+  oss << "Exported " << exporter.records_exported() << " records to " << output;
+  cli_out(oss.str());
   return 0;
 }
 
@@ -457,33 +523,51 @@ int Cli::cmd_import(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
+  Result vr = validate_input_path(input);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = validate_output_path(output);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
   bool verbose = has_flag(args, "--verbose");
 
   TextImporter importer;
   importer.set_strict(!has_flag(args, "--lenient"));
   Result r = importer.import_file(input, output);
   if (!r.ok()) {
-    std::cerr << "Import failed: " << r.message << std::endl;
+    cli_err(std::string("Import failed: ") + r.message);
     return 1;
   }
   if (verbose) {
-    std::cout << "Imported " << importer.records().size() << " records";
+    std::ostringstream oss;
+    oss << "Imported " << importer.records().size() << " records";
     if (importer.parse_errors() > 0) {
-      std::cout << " (" << importer.parse_errors() << " parse warnings)";
+      oss << " (" << importer.parse_errors() << " parse warnings)";
     }
-    std::cout << std::endl;
+    cli_out(oss.str());
   }
-  std::cout << "Import OK: " << importer.records().size() << " records -> " << output << std::endl;
+  std::ostringstream oss;
+  oss << "Import OK: " << importer.records().size() << " records -> " << output;
+  cli_out(oss.str());
   return 0;
 }
 
 int Cli::cmd_health(const std::vector<std::string>& /*args*/) {
   HealthReport report = build_health_report();
-  std::cout << format_health_report_json(report) << std::endl;
+  // Machine-readable JSON via the logging stream (no raw std::cout).
+  log().emit_raw(format_health_report_json(report));
   return report.status == "ok" ? 0 : 1;
 }
 
 int Cli::run(int argc, char* argv[]) {
+  log().set_stream(&std::cout);
+  log().configure_from_env();
+  metrics().inc_commands();
+
   if (argc < 2) {
     print_banner();
     print_usage();
@@ -504,7 +588,7 @@ int Cli::run(int argc, char* argv[]) {
   if (cmd == "health") return cmd_health(args);
   if (cmd == "help" || cmd == "--help" || cmd == "-h") return cmd_help(args);
 
-  std::cerr << "Unknown command: " << cmd << std::endl;
+  cli_err(std::string("Unknown command: ") + cmd);
   print_usage();
   return 1;
 }

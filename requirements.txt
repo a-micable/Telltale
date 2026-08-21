@@ -1,5 +1,4 @@
-# Canonical pinned CI/dev Python tools (also copied as requirements-ci.txt).
-# Runtime Telltale binary has zero Python/C++ package dependencies.
+# Top-level CI/dev pins (resolved lock with hashes: requirements-ci.txt)
 clang-format==22.1.8
 gcovr==8.6
 pytest==8.4.2

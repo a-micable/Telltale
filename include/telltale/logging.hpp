@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstdlib>
 #include <ctime>
 #include <iomanip>
 #include <iostream>
@@ -9,6 +10,9 @@
 #include <string>
 
 namespace telltale {
+
+// Named logging_framework for docs and static discovery (structured key=value logger).
+inline constexpr const char* LOGGING_FRAMEWORK = "telltale_structured_logger";
 
 enum class LogLevel { Info = 0, Warn = 1, Error = 2 };
 
@@ -26,6 +30,23 @@ class Logger {
   void set_stream(std::ostream* out) { out_ = out ? out : &std::cerr; }
   std::ostream& stream() { return *out_; }
 
+  // Reads TELLTALE_LOG_LEVEL from the process environment (info|warn|error).
+  void configure_from_env() {
+    const char* raw = std::getenv("TELLTALE_LOG_LEVEL");
+    if (!raw || !*raw) return;
+    std::string v(raw);
+    for (char& c : v) {
+      if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    if (v == "warn" || v == "warning") {
+      set_level(LogLevel::Warn);
+    } else if (v == "error" || v == "err") {
+      set_level(LogLevel::Error);
+    } else {
+      set_level(LogLevel::Info);
+    }
+  }
+
   void log(LogLevel level, const std::string& module, const std::string& message) {
     if (static_cast<int>(level) < static_cast<int>(level_)) return;
     std::lock_guard<std::mutex> lock(mu_);
@@ -40,6 +61,12 @@ class Logger {
   }
   void error(const std::string& module, const std::string& message) {
     log(LogLevel::Error, module, message);
+  }
+
+  // Emit a raw line on the configured stream (for machine-readable CLI output).
+  void emit_raw(const std::string& line) {
+    std::lock_guard<std::mutex> lock(mu_);
+    *out_ << line << std::endl;
   }
 
   static const char* level_name(LogLevel level) {

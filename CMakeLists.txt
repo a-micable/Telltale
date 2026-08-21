@@ -9,6 +9,7 @@ set(TELLTALE_CXX_FLAGS -Wall -Werror -Wextra -pedantic)
 set(TELLTALE_LIB_SOURCES
   src/crc32.cpp
   src/binary_io.cpp
+  src/payload_codec.cpp
   src/handler_registry.cpp
   src/schema_update.cpp
   src/dispatcher.cpp

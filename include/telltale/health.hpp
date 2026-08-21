@@ -10,6 +10,9 @@ struct HealthReport {
   std::string build;
   bool logging_ready;
   bool suite_entrypoints_present;
+  std::string logging_framework;
+  std::string error_tracking;
+  std::string metrics_module;
 };
 
 // Machine-readable health snapshot for ops/automation (not a network server).

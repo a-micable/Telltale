@@ -6,7 +6,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 
 **This is a C++ CLI / library — not infrastructure.**
 
-See [`PROJECT_TYPE`](PROJECT_TYPE) and [`docs/PROJECT_CLASSIFICATION.md`](docs/PROJECT_CLASSIFICATION.md). GitHub topics: `cli`, `cpp`, `binary-format`, `event-log`, `command-line`.
+Root [`PROJECT_TYPE`](PROJECT_TYPE) contains exactly `cli-tool` (machine-readable). See also [`docs/PROJECT_CLASSIFICATION.md`](docs/PROJECT_CLASSIFICATION.md). GitHub topics: `cli`, `cpp`, `binary-format`, `event-log`, `command-line`, `library`.
 
 Telltale has **zero** Terraform, Kubernetes, Helm, Ansible, or Pulumi content **by design**. Scoring under an “infra / IaC” rubric is a misclassification; the correct bucket is CLI/devtools/library.
 

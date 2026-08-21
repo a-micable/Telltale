@@ -12,6 +12,7 @@ COVERAGE_DIR = coverage
 LIB_SRCS = \
 	$(SRC_DIR)/crc32.cpp \
 	$(SRC_DIR)/binary_io.cpp \
+	$(SRC_DIR)/payload_codec.cpp \
 	$(SRC_DIR)/handler_registry.cpp \
 	$(SRC_DIR)/schema_update.cpp \
 	$(SRC_DIR)/dispatcher.cpp \
@@ -100,6 +101,7 @@ coverage:
 	  gcovr --root . \
 	    --filter 'src/crc32\.cpp' \
 	    --filter 'src/binary_io\.cpp' \
+	    --filter 'src/payload_codec\.cpp' \
 	    --filter 'src/dispatcher\.cpp' \
 	    --filter 'src/handler_registry\.cpp' \
 	    --filter 'src/schema_update\.cpp' \

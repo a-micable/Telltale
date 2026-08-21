@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -13,8 +13,6 @@ jobs:
 
       - name: Install apt toolchain (pinned)
         run: |
-          chmod +x ci/install_ci_apt.sh
-          # build-essential + cmake only for this job
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             build-essential \
@@ -37,20 +35,20 @@ jobs:
       - name: Build
         run: make
 
-      - name: Run tests (Make — canonical)
+      - name: Run tests (make test)
         run: |
           set -o pipefail
-          ./scripts/run_tests.sh 2>&1 | tee test-output.txt
+          make test 2>&1 | tee test-output.txt
           if grep -q FAILED test-output.txt; then
             echo "Test suite reported FAILED"
             exit 1
           fi
           grep -Eq '[0-9]+/[0-9]+ passed' test-output.txt
 
-      - name: Run tests (pytest discovery wrapper)
+      - name: Run tests (pytest)
         run: python3 -m pytest -q
 
-      - name: Run tests (CMake/CTest)
+      - name: Run tests (ctest)
         run: |
           cmake -S . -B build-cmake
           cmake --build build-cmake -j$(nproc)
@@ -62,6 +60,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Cache pip
         uses: actions/cache@v4
         with:
@@ -70,17 +73,56 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install clang-format
+      - name: Install clang-format and pip-audit
         run: |
           python3 -m pip install --user -r requirements-ci.txt
+          python3 -m pip install --user pip-audit
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Check formatting
+      - name: Lint (clang-format)
         run: |
           set -euo pipefail
           clang-format --version
           mapfile -t files < <(find src include tests -type f \( -name '*.cpp' -o -name '*.hpp' \) | sort)
           clang-format --dry-run --Werror "${files[@]}"
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit -r requirements-ci.txt
+
+      - name: Dependency audit (npm audit)
+        run: npm audit --audit-level=high
+
+  typecheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy and cppcheck (pinned)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang-tidy=1:14.0-55~exp2 \
+            cppcheck=2.7-1 \
+            || sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
+
+      - name: Typecheck / static analysis (cppcheck)
+        run: |
+          cppcheck --enable=warning,style,performance,portability \
+            --error-exitcode=1 --inline-suppr --std=c++17 \
+            -I include \
+            src/crc32.cpp src/binary_io.cpp src/payload_codec.cpp \
+            src/handler_registry.cpp src/schema_update.cpp src/dispatcher.cpp \
+            src/builtin_handlers.cpp src/cli.cpp src/main.cpp
+
+      - name: Typecheck (clang-tidy)
+        run: |
+          clang-tidy \
+            --checks='-*,bugprone-*,-bugprone-easily-swappable-parameters,clang-analyzer-*' \
+            --warnings-as-errors='bugprone-*,clang-analyzer-*' \
+            --header-filter='include/telltale/(cli|errors)\\.hpp' \
+            src/cli.cpp src/main.cpp -- \
+            -std=c++17 -Iinclude -Wall
 
   coverage:
     runs-on: ubuntu-22.04
@@ -109,41 +151,14 @@ jobs:
           python3 -m pip install --user -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Run coverage gate
-        run: make coverage
-
-  static-analysis:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install clang-tidy and cppcheck (pinned)
+      - name: Run coverage gate (fail under 70%)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            clang-tidy=1:14.0-55~exp2 \
-            cppcheck=2.7-1 \
-            || sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
-
-      - name: Run cppcheck on core sources
-        run: |
-          cppcheck --enable=warning,style,performance,portability \
-            --error-exitcode=1 --inline-suppr --std=c++17 \
-            -I include \
-            src/crc32.cpp src/binary_io.cpp src/handler_registry.cpp \
-            src/schema_update.cpp src/dispatcher.cpp src/builtin_handlers.cpp \
-            src/cli.cpp src/main.cpp
-
-      - name: Run clang-tidy on CLI entrypoints
-        run: |
-          clang-tidy \
-            --checks='-*,bugprone-*,-bugprone-easily-swappable-parameters,clang-analyzer-*' \
-            --warnings-as-errors='bugprone-*,clang-analyzer-*' \
-            --header-filter='include/telltale/(cli|errors)\\.hpp' \
-            src/cli.cpp src/main.cpp -- \
-            -std=c++17 -Iinclude -Wall
-
+          set -euo pipefail
+          # make coverage invokes gcovr --fail-under-line 70 (exit 1 if below gate)
+          make coverage
+          test -f coverage/index.html
+          test -f coverage/summary.txt
+          echo "Coverage gate passed (>= 70% core line coverage)"
   dependency-audit:
     runs-on: ubuntu-22.04
     steps:
@@ -168,19 +183,29 @@ jobs:
             --suppress=noExplicitConstructor \
             --suppress=useStlAlgorithm \
             --error-exitcode=1 \
-            src/crc32.cpp src/binary_io.cpp src/handler_registry.cpp \
-            src/schema_update.cpp src/dispatcher.cpp src/builtin_handlers.cpp \
-            src/cli.cpp src/main.cpp
+            src/crc32.cpp src/binary_io.cpp src/payload_codec.cpp \
+            src/handler_registry.cpp src/schema_update.cpp src/dispatcher.cpp \
+            src/builtin_handlers.cpp src/cli.cpp src/main.cpp
 
       - name: Fail if vendored third-party trees appear
         run: |
           set -euo pipefail
           if find include src -type d \( -iname 'third_party' -o -iname 'vendor' -o -iname 'external' -o -iname 'deps' \) | grep -q .; then
             echo "Unexpected vendored dependency directory found"
-            find include src -type d \( -iname 'third_party' -o -iname 'vendor' -o -iname 'external' -o -iname 'deps' \)
             exit 1
           fi
           echo "OK: no vendored third-party directories under include/ or src/"
+
+      - name: Fail if history-fabrication scripts reappear
+        run: |
+          set -euo pipefail
+          for f in expand_project.py expand_phase2.py expand_commits.py expand.py; do
+            if [[ -f "$f" ]]; then
+              echo "Forbidden fabrication script present: $f"
+              exit 1
+            fi
+          done
+          echo "OK: no expand_*.py fabrication scripts"
 
       - name: Lightweight secret / TODO scan
         run: |

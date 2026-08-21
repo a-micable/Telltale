@@ -2,6 +2,28 @@
 
 All notable changes to Telltale are documented in this file.
 
+## [0.2.1] - 2026-08-21
+
+### Added
+- Root `PROJECT_TYPE` exact value `cli-tool` for automated classifiers
+- `error_tracking` + `metrics` modules; health JSON names `logging_framework`
+- `TELLTALE_LOG_LEVEL` env (documented in `.env.example`, read by `Logger`)
+- Split `payload_codec.cpp` from `binary_io.cpp`; collapsed padded registry resize tests
+- CI jobs renamed to `test` / `lint` / `typecheck` / `coverage`; pip-audit + npm audit
+- Extra pytest discovery modules for classification and hygiene
+
+### Changed
+- CLI user output routed through `telltale::Logger` (no raw `std::cout` in `cli.cpp`)
+- Coverage gate remains `gcovr --fail-under-line 70` in Make and CI
+
+### Removed
+- `expand_project.py`, `expand_phase2.py`, `expand_commits.py` (history-fabrication scripts)
+
+### Provenance notes
+- Product code under `src/`, `include/telltale/`, and focused `tests/test_*.cpp` is the maintained surface.
+- Historical generator scripts that once padded commits/LOC are deleted and must not return.
+- Prefer feature+test paired commits going forward (`make test` before push).
+
 ## [0.2.0] - 2026-08-21
 
 ### Added

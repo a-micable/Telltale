@@ -15,6 +15,16 @@ TEST(FillerCleanup, QueryDistributedIndexingSourcesRemoved) {
   return true;
 }
 
+TEST(FillerCleanup, HistoryFabricationScriptsRemoved) {
+  struct stat st{};
+  EXPECT_TRUE(stat("expand_project.py", &st) != 0);
+  EXPECT_TRUE(stat("expand_phase2.py", &st) != 0);
+  EXPECT_TRUE(stat("expand_commits.py", &st) != 0);
+  EXPECT_TRUE(stat("expand.py", &st) != 0);
+  return true;
+}
+
 void run_filler_cleanup_tests() {
   RUN_TEST(test_FillerCleanup_QueryDistributedIndexingSourcesRemoved);
+  RUN_TEST(test_FillerCleanup_HistoryFabricationScriptsRemoved);
 }
