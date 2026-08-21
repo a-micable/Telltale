@@ -1,7 +1,7 @@
-#include "telltale/binary_io.hpp"
-
 #include <cstring>
 #include <vector>
+
+#include "telltale/binary_io.hpp"
 
 namespace telltale {
 

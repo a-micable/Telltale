@@ -189,7 +189,6 @@ Result EventLogWriter::finalize() {
   return Result::success();
 }
 
-
 EventLogReader::EventLogReader(const std::string& path)
     : path_(path),
       buffer_mode_(false),

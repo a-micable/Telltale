@@ -16,12 +16,8 @@ class Metrics {
   }
 
   void inc_commands() { commands_.fetch_add(1, std::memory_order_relaxed); }
-  void inc_validation_failures() {
-    validation_failures_.fetch_add(1, std::memory_order_relaxed);
-  }
-  void inc_records_written(uint64_t n) {
-    records_written_.fetch_add(n, std::memory_order_relaxed);
-  }
+  void inc_validation_failures() { validation_failures_.fetch_add(1, std::memory_order_relaxed); }
+  void inc_records_written(uint64_t n) { records_written_.fetch_add(n, std::memory_order_relaxed); }
 
   uint64_t commands() const { return commands_.load(std::memory_order_relaxed); }
   uint64_t validation_failures() const {
