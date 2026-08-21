@@ -29,7 +29,7 @@ jobs:
 
       - name: Install pytest (suite discovery)
         run: |
-          python3 -m pip install --user -r requirements-ci.txt
+          python3 -m pip install --user --require-hashes -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build
@@ -54,6 +54,12 @@ jobs:
           cmake --build build-cmake -j$(nproc)
           ctest --test-dir build-cmake --output-on-failure
 
+      - name: Coverage gate (make coverage, fail under 70%)
+        run: |
+          set -euo pipefail
+          make coverage
+          test -f coverage/index.html
+
   lint:
     runs-on: ubuntu-22.04
     steps:
@@ -75,7 +81,7 @@ jobs:
 
       - name: Install clang-format and pip-audit
         run: |
-          python3 -m pip install --user -r requirements-ci.txt
+          python3 -m pip install --user --require-hashes -r requirements-ci.txt
           python3 -m pip install --user pip-audit
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -113,7 +119,7 @@ jobs:
             -I include \
             src/crc32.cpp src/binary_io.cpp src/payload_codec.cpp \
             src/handler_registry.cpp src/schema_update.cpp src/dispatcher.cpp \
-            src/builtin_handlers.cpp src/cli.cpp src/main.cpp
+            src/builtin_handlers.cpp src/cli.cpp src/cli_usage.cpp src/cli_sample.cpp src/main.cpp
 
       - name: Typecheck (clang-tidy)
         run: |
@@ -148,7 +154,7 @@ jobs:
 
       - name: Install gcovr
         run: |
-          python3 -m pip install --user -r requirements-ci.txt
+          python3 -m pip install --user --require-hashes -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Run coverage gate (fail under 70%)
@@ -185,7 +191,7 @@ jobs:
             --error-exitcode=1 \
             src/crc32.cpp src/binary_io.cpp src/payload_codec.cpp \
             src/handler_registry.cpp src/schema_update.cpp src/dispatcher.cpp \
-            src/builtin_handlers.cpp src/cli.cpp src/main.cpp
+            src/builtin_handlers.cpp src/cli.cpp src/cli_usage.cpp src/cli_sample.cpp src/main.cpp
 
       - name: Fail if vendored third-party trees appear
         run: |
