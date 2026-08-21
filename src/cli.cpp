@@ -13,12 +13,16 @@
 #include "telltale/diff_engine.hpp"
 #include "telltale/dispatcher.hpp"
 #include "telltale/filter_engine.hpp"
+#include "telltale/logging.hpp"
 #include "telltale/schema_update.hpp"
 #include "telltale/text_format.hpp"
 
 namespace telltale {
 
-static void print_banner() { std::cout << "Telltale Event Log Tool v1.0" << std::endl; }
+static void print_banner() {
+  log().info("cli", "Telltale Event Log Tool v1.0");
+  std::cout << "Telltale Event Log Tool v1.0" << std::endl;
+}
 
 std::vector<std::string> Cli::parse_args(int argc, char* argv[]) {
   std::vector<std::string> args;
