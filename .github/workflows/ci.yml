@@ -15,7 +15,7 @@ jobs:
         run: bash ci/install_ci_apt.sh
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
@@ -67,7 +67,7 @@ jobs:
           node-version: "20"
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
@@ -131,7 +131,7 @@ jobs:
         run: bash ci/install_ci_apt.sh
 
       - name: Cache pip
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
