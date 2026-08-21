@@ -1,4 +1,2 @@
 // Integration tests test 15
-TEST(Telltale, IntegrationTest15) {
-    EXPECT_TRUE(true);
-}
+TEST(Telltale, IntegrationTest15) { EXPECT_TRUE(true); }
