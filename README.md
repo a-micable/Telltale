@@ -31,6 +31,8 @@ Telltale has **no third-party C++ package dependencies**. Lockfiles / pins that 
 
 No runtime `.env` is required — see [`.env.example`](.env.example).
 
+For a ready-made VS Code / Cursor toolchain, open the repo in a [dev container](.devcontainer/) (`.devcontainer/devcontainer.json` uses the Microsoft C++ image and runs `make && make test` after create).
+
 ```bash
 # Debian/Ubuntu
 sudo apt-get update

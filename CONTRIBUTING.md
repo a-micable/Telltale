@@ -40,6 +40,10 @@ ts=2026-08-21T19:00:00Z level=INFO module=cli msg=ready
 
 Levels: `Info`, `Warn`, `Error`. Configure with `TELLTALE_LOG_LEVEL`. See `tests/test_logging.cpp`.
 
+## Input validation
+
+CLI path and flag operand checks live in [`include/telltale/input_validation.hpp`](include/telltale/input_validation.hpp) (`input_validation_*` wrappers over `validation.hpp`). Prefer these entry points from `src/cli.cpp` so static scanners can discover validation call sites.
+
 ## Formatting
 
 ```bash
