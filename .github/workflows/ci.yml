@@ -37,11 +37,12 @@ jobs:
 
       - name: Install clang-format
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-format
+          python3 -m pip install --user 'clang-format==22.1.8'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Check formatting
         run: |
           set -euo pipefail
+          clang-format --version
           mapfile -t files < <(find src include tests -type f \( -name '*.cpp' -o -name '*.hpp' \) | sort)
           clang-format --dry-run --Werror "${files[@]}"
