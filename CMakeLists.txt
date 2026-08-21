@@ -24,6 +24,8 @@ set(TELLTALE_LIB_SOURCES
   src/storage_backends.cpp
   src/health.cpp
   src/cli.cpp
+  src/cli_usage.cpp
+  src/cli_sample.cpp
 )
 
 add_library(telltale STATIC ${TELLTALE_LIB_SOURCES})
@@ -56,6 +58,7 @@ set(TELLTALE_TEST_SOURCES
   tests/test_compaction_engine.cpp
   tests/test_text_format.cpp
   tests/test_cli_validation.cpp
+  tests/test_cli_args.cpp
   tests/test_logging.cpp
   tests/test_managers.cpp
   tests/test_fresh_clone.cpp

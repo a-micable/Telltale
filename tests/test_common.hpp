@@ -78,6 +78,7 @@ void run_diff_engine_tests();
 void run_compaction_engine_tests();
 void run_text_format_tests();
 void run_cli_validation_tests();
+void run_cli_args_tests();
 void run_logging_tests();
 void run_manager_logging_tests();
 void run_fresh_clone_tests();

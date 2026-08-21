@@ -11,6 +11,14 @@ class Cli {
  public:
   static int run(int argc, char* argv[]);
 
+  // Public for unit tests (argv parsing / flag extraction).
+  static std::vector<std::string> parse_args(int argc, char* argv[]);
+  static bool has_flag(const std::vector<std::string>& args, const std::string& flag);
+  static std::string get_flag_value(const std::vector<std::string>& args, const std::string& flag,
+                                    const std::string& default_val);
+  static std::vector<std::string> collect_positional(const std::vector<std::string>& args,
+                                                     size_t start_index);
+
  private:
   static int cmd_write(const std::vector<std::string>& args);
   static int cmd_replay(const std::vector<std::string>& args);
@@ -32,13 +40,7 @@ class Cli {
   static void print_compact_usage();
   static void print_export_usage();
   static void print_import_usage();
-
-  static std::vector<std::string> parse_args(int argc, char* argv[]);
-  static bool has_flag(const std::vector<std::string>& args, const std::string& flag);
-  static std::string get_flag_value(const std::vector<std::string>& args, const std::string& flag,
-                                    const std::string& default_val);
-  static std::vector<std::string> collect_positional(const std::vector<std::string>& args,
-                                                     size_t start_index);
+  static void print_banner();
 };
 
 int generate_sample_log(const std::string& output_path, size_t event_count, bool verbose);

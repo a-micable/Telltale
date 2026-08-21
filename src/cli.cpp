@@ -16,6 +16,7 @@
 #include "telltale/error_tracking.hpp"
 #include "telltale/filter_engine.hpp"
 #include "telltale/health.hpp"
+#include "telltale/input_validation.hpp"
 #include "telltale/logging.hpp"
 #include "telltale/metrics.hpp"
 #include "telltale/schema_update.hpp"
@@ -41,8 +42,6 @@ void report_validation_failure(const Result& r) {
 
 }  // namespace
 
-static void print_banner() { cli_out("Telltale Event Log Tool v1.0"); }
-
 std::vector<std::string> Cli::parse_args(int argc, char* argv[]) {
   std::vector<std::string> args;
   for (int i = 0; i < argc; ++i) {
@@ -63,84 +62,6 @@ std::string Cli::get_flag_value(const std::vector<std::string>& args, const std:
     }
   }
   return default_val;
-}
-
-void Cli::print_usage() {
-  cli_out("Usage: telltale <command> [options]");
-  cli_out("");
-  cli_out("Commands:");
-  cli_out("  write   Generate a sample event log file");
-  cli_out("  replay  Replay an event log file with handler execution");
-  cli_out("  verify  Verify CRC32 and schema without executing handlers");
-  cli_out("  filter  Filter records from a log into a new log file");
-  cli_out("  diff    Compare two log files and print a diff report");
-  cli_out("  compact Merge multiple log files into one output file");
-  cli_out("  export  Export a binary log to plain-text format");
-  cli_out("  import  Import a plain-text log back to binary format");
-  cli_out("  health  Print JSON health status for automation");
-  cli_out("  help    Show this help message");
-}
-
-void Cli::print_write_usage() {
-  cli_out("Usage: telltale write <output-file> [options]");
-  cli_out("Options:");
-  cli_out("  --events N    Number of events to generate (default: 20)");
-  cli_out("  --verbose     Enable verbose output");
-}
-
-void Cli::print_replay_usage() {
-  cli_out("Usage: telltale replay <input-file> [options]");
-  cli_out("Options:");
-  cli_out("  --verbose     Enable verbose handler output");
-}
-
-void Cli::print_verify_usage() {
-  cli_out("Usage: telltale verify <input-file> [options]");
-  cli_out("Options:");
-  cli_out("  --verbose     Enable verbose verification output");
-}
-
-void Cli::print_filter_usage() {
-  cli_out("Usage: telltale filter <input-file> <output-file> [options]");
-  cli_out("Options:");
-  cli_out("  --type ID         Match exact type ID (hex or decimal)");
-  cli_out("  --type-min ID     Minimum type ID (inclusive)");
-  cli_out("  --type-max ID     Maximum type ID (inclusive)");
-  cli_out("  --time-min MS     Minimum timestamp (epoch millis)");
-  cli_out("  --time-max MS     Maximum timestamp (epoch millis)");
-  cli_out("  --field NAME OP VALUE   Payload field filter (op: eq,ne,gt,lt,contains)");
-  cli_out("  --combine and|or  Combine field filters (default: and)");
-  cli_out("  --no-schema       Exclude schema update events");
-  cli_out("  --explain         Print filter statistics");
-  cli_out("  --verbose         Verbose output");
-}
-
-void Cli::print_diff_usage() {
-  cli_out("Usage: telltale diff <left-file> <right-file> [options]");
-  cli_out("Options:");
-  cli_out("  --verbose     Show equal records in addition to changes");
-}
-
-void Cli::print_compact_usage() {
-  cli_out("Usage: telltale compact <output-file> <input-file> [more-inputs...] [options]");
-  cli_out("Options:");
-  cli_out("  --no-dedupe-reset   Keep consecutive duplicate reset events");
-  cli_out("  --verify-output     Verify output file after compaction");
-  cli_out("  --verbose           Verbose output");
-}
-
-void Cli::print_export_usage() {
-  cli_out("Usage: telltale export <input-file> <output-file> [options]");
-  cli_out("Options:");
-  cli_out("  --raw-hex     Include raw hex payload for unknown types");
-  cli_out("  --verbose     Verbose output");
-}
-
-void Cli::print_import_usage() {
-  cli_out("Usage: telltale import <input-text-file> <output-binary-file> [options]");
-  cli_out("Options:");
-  cli_out("  --lenient     Continue on parse errors where possible");
-  cli_out("  --verbose     Verbose output");
 }
 
 std::vector<std::string> Cli::collect_positional(const std::vector<std::string>& args,
@@ -171,103 +92,13 @@ int Cli::cmd_help(const std::vector<std::string>& /*args*/) {
   return 0;
 }
 
-int generate_sample_log(const std::string& output_path, size_t event_count, bool verbose) {
-  EventLogWriter writer(output_path);
-  Result r = writer.open();
-  if (!r.ok()) {
-    cli_err(std::string("Error: ") + r.message);
-    return 1;
-  }
-  r = writer.write_header();
-  if (!r.ok()) {
-    cli_err(std::string("Error: ") + r.message);
-    return 1;
-  }
-
-  if (verbose) {
-    cli_out(std::string("Writing sample log to ") + output_path);
-  }
-
-  writer.write_event(static_cast<uint16_t>(EventType::Print),
-                     EventLogWriter::encode_print_payload("Telltale sample log started", 1));
-
-  writer.write_event(static_cast<uint16_t>(EventType::Counter),
-                     EventLogWriter::encode_counter_payload("requests", 0, true));
-  writer.write_event(static_cast<uint16_t>(EventType::Counter),
-                     EventLogWriter::encode_counter_payload("errors", 0, true));
-  writer.write_event(static_cast<uint16_t>(EventType::Counter),
-                     EventLogWriter::encode_counter_payload("requests", 1, false));
-  writer.write_event(static_cast<uint16_t>(EventType::Counter),
-                     EventLogWriter::encode_counter_payload("requests", 5, false));
-
-  writer.write_event(static_cast<uint16_t>(EventType::KeyValue),
-                     EventLogWriter::encode_keyvalue_payload("host", 1, true));
-  writer.write_event(static_cast<uint16_t>(EventType::KeyValue),
-                     EventLogWriter::encode_keyvalue_payload("port", 8080, true));
-  writer.write_event(static_cast<uint16_t>(EventType::KeyValue),
-                     EventLogWriter::encode_keyvalue_payload("version", 42, true));
-
-  writer.write_event(static_cast<uint16_t>(EventType::Timestamp),
-                     EventLogWriter::encode_timestamp_payload("start", 1700000000000ULL, true));
-  writer.write_event(static_cast<uint16_t>(EventType::Timestamp),
-                     EventLogWriter::encode_timestamp_payload("checkpoint", 0, false));
-
-  std::vector<std::vector<uint8_t>> batch_subs;
-  batch_subs.push_back(EventLogWriter::encode_counter_payload("batch_items", 1, false));
-  batch_subs.push_back(EventLogWriter::encode_counter_payload("batch_items", 1, false));
-  batch_subs.push_back(EventLogWriter::encode_counter_payload("batch_items", 1, false));
-  batch_subs.push_back(EventLogWriter::encode_print_payload("batch sub-event", 1));
-  writer.write_event(static_cast<uint16_t>(EventType::Batch),
-                     EventLogWriter::encode_batch_payload(batch_subs));
-
-  {
-    ReplayContext tmp;
-    uint32_t crc = tmp.state().compute_state_crc(0x03);
-    writer.write_event(static_cast<uint16_t>(EventType::Checksum),
-                       EventLogWriter::encode_checksum_payload("state", crc, 0x03));
-  }
-
-  writer.write_event(static_cast<uint16_t>(EventType::Print),
-                     EventLogWriter::encode_print_payload("Processing complete", 1));
-
-  writer.write_event(static_cast<uint16_t>(EventType::Stats),
-                     EventLogWriter::encode_stats_payload(0x0F, "sample"));
-
-  writer.write_schema_update(static_cast<uint8_t>(SchemaUpdateFlag::Register), 0x0100,
-                             static_cast<uint16_t>(HandlerId::BuiltinNoOp));
-
-  writer.write_event(0x0100,
-                     EventLogWriter::encode_print_payload("Custom type via schema update", 2));
-
-  writer.write_schema_update(static_cast<uint8_t>(SchemaUpdateFlag::Deregister), 0x0100, 0);
-
-  size_t extra = event_count > 12 ? event_count - 12 : 0;
-  for (size_t i = 0; i < extra; ++i) {
-    writer.write_event(
-        static_cast<uint16_t>(EventType::Counter),
-        EventLogWriter::encode_counter_payload("extra_" + std::to_string(i), 1, false));
-  }
-
-  r = writer.finalize();
-  if (!r.ok()) {
-    cli_err(std::string("Error finalizing: ") + r.message);
-    return 1;
-  }
-
-  metrics().inc_records_written(writer.record_count());
-  if (verbose) {
-    cli_out(std::string("Wrote ") + std::to_string(writer.record_count()) + " records");
-  }
-  return 0;
-}
-
 int Cli::cmd_write(const std::vector<std::string>& args) {
   if (args.size() < 3) {
     print_write_usage();
     return 1;
   }
   std::string output = args[2];
-  Result vr = validate_output_path(output);
+  Result vr = input_validation_cli_output_path(output);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -285,7 +116,7 @@ int Cli::cmd_replay(const std::vector<std::string>& args) {
     return 1;
   }
   std::string input = args[2];
-  Result vr = validate_input_path(input);
+  Result vr = input_validation_cli_input_path(input);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -314,7 +145,7 @@ int Cli::cmd_verify(const std::vector<std::string>& args) {
     return 1;
   }
   std::string input = args[2];
-  Result vr = validate_input_path(input);
+  Result vr = input_validation_cli_input_path(input);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -344,12 +175,22 @@ int Cli::cmd_filter(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
-  Result vr = validate_input_path(input);
+  Result vr = input_validation_cli_input_path(input);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
   }
-  vr = validate_output_path(output);
+  vr = input_validation_cli_output_path(output);
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = input_validation_flag_operand(args, "--field");
+  if (!vr.ok()) {
+    report_validation_failure(vr);
+    return 1;
+  }
+  vr = input_validation_flag_operand(args, "--type");
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -392,12 +233,12 @@ int Cli::cmd_diff(const std::vector<std::string>& args) {
   }
   std::string left = args[2];
   std::string right = args[3];
-  Result vr = validate_input_path(left);
+  Result vr = input_validation_cli_input_path(left);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
   }
-  vr = validate_input_path(right);
+  vr = input_validation_cli_input_path(right);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -432,7 +273,7 @@ int Cli::cmd_compact(const std::vector<std::string>& args) {
     return 1;
   }
   std::string output = positional[0];
-  Result vr = validate_output_path(output);
+  Result vr = input_validation_cli_output_path(output);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -446,6 +287,11 @@ int Cli::cmd_compact(const std::vector<std::string>& args) {
   engine.set_options(opts);
 
   for (size_t i = 1; i < positional.size(); ++i) {
+    Result ir = input_validation_cli_input_path(positional[i]);
+    if (!ir.ok()) {
+      report_validation_failure(ir);
+      return 1;
+    }
     Result r = engine.add_input(positional[i], static_cast<uint32_t>(i));
     if (!r.ok()) {
       cli_err(std::string("Compact add input failed: ") + r.message);
@@ -490,12 +336,12 @@ int Cli::cmd_export(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
-  Result vr = validate_input_path(input);
+  Result vr = input_validation_cli_input_path(input);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
   }
-  vr = validate_output_path(output);
+  vr = input_validation_cli_output_path(output);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
@@ -523,12 +369,12 @@ int Cli::cmd_import(const std::vector<std::string>& args) {
   }
   std::string input = args[2];
   std::string output = args[3];
-  Result vr = validate_input_path(input);
+  Result vr = input_validation_cli_input_path(input);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;
   }
-  vr = validate_output_path(output);
+  vr = input_validation_cli_output_path(output);
   if (!vr.ok()) {
     report_validation_failure(vr);
     return 1;

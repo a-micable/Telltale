@@ -26,7 +26,9 @@ LIB_SRCS = \
 	$(SRC_DIR)/network.cpp \
 	$(SRC_DIR)/storage_backends.cpp \
 	$(SRC_DIR)/health.cpp \
-	$(SRC_DIR)/cli.cpp
+	$(SRC_DIR)/cli.cpp \
+	$(SRC_DIR)/cli_usage.cpp \
+	$(SRC_DIR)/cli_sample.cpp
 
 MAIN_SRC = $(SRC_DIR)/main.cpp
 
@@ -49,6 +51,7 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_compaction_engine.cpp \
 	$(TEST_DIR)/test_text_format.cpp \
 	$(TEST_DIR)/test_cli_validation.cpp \
+	$(TEST_DIR)/test_cli_args.cpp \
 	$(TEST_DIR)/test_logging.cpp \
 	$(TEST_DIR)/test_managers.cpp \
 	$(TEST_DIR)/test_fresh_clone.cpp \

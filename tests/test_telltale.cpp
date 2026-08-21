@@ -19,6 +19,7 @@ int main() {
   run_compaction_engine_tests();
   run_text_format_tests();
   run_cli_validation_tests();
+  run_cli_args_tests();
   run_logging_tests();
   run_manager_logging_tests();
   run_fresh_clone_tests();
