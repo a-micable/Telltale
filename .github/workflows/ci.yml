@@ -11,15 +11,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install g++
+      - name: Install apt toolchain (pinned)
         run: |
+          chmod +x ci/install_ci_apt.sh
+          # build-essential + cmake only for this job
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential cmake
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake=3.22.1-1ubuntu1.22.04.2 \
+            || sudo apt-get install -y --no-install-recommends build-essential cmake
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install pytest (suite discovery)
+        run: |
+          python3 -m pip install --user -r requirements-ci.txt
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Build
         run: make
 
-      - name: Run tests (Make)
+      - name: Run tests (Make — canonical)
         run: |
           set -o pipefail
           ./scripts/run_tests.sh 2>&1 | tee test-output.txt
@@ -28,6 +46,9 @@ jobs:
             exit 1
           fi
           grep -Eq '[0-9]+/[0-9]+ passed' test-output.txt
+
+      - name: Run tests (pytest discovery wrapper)
+        run: python3 -m pytest -q
 
       - name: Run tests (CMake/CTest)
         run: |
@@ -40,6 +61,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install clang-format
         run: |
@@ -59,10 +88,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install toolchain
+      - name: Install apt toolchain (pinned)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends build-essential lcov
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            lcov=1.15-1 \
+            || sudo apt-get install -y --no-install-recommends build-essential lcov
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install gcovr
+        run: |
           python3 -m pip install --user -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
@@ -75,10 +118,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install clang-tidy and cppcheck
+      - name: Install clang-tidy and cppcheck (pinned)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
+          sudo apt-get install -y --no-install-recommends \
+            clang-tidy=1:14.0-55~exp2 \
+            cppcheck=2.7-1 \
+            || sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
 
       - name: Run cppcheck on core sources
         run: |
@@ -104,10 +150,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install cppcheck
+      - name: Install cppcheck (pinned)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cppcheck
+          sudo apt-get install -y --no-install-recommends cppcheck=2.7-1 \
+            || sudo apt-get install -y --no-install-recommends cppcheck
 
       - name: Verify job declaration (local dry-run equivalent)
         run: ./scripts/verify_ci_jobs.sh
@@ -128,7 +175,6 @@ jobs:
       - name: Fail if vendored third-party trees appear
         run: |
           set -euo pipefail
-          # Telltale has zero third-party deps; reject newly vendored trees.
           if find include src -type d \( -iname 'third_party' -o -iname 'vendor' -o -iname 'external' -o -iname 'deps' \) | grep -q .; then
             echo "Unexpected vendored dependency directory found"
             find include src -type d \( -iname 'third_party' -o -iname 'vendor' -o -iname 'external' -o -iname 'deps' \)
@@ -139,7 +185,6 @@ jobs:
       - name: Lightweight secret / TODO scan
         run: |
           set -euo pipefail
-          # Fail on secret-like assignments; allow ordinary TODO/FIXME in docs only by scanning code paths.
           if grep -RInE \
             --include='*.cpp' --include='*.hpp' --include='*.h' --include='*.yml' --include='*.yaml' --include='*.sh' \
             -e '(api[_-]?key|secret[_-]?key|password|private[_-]?key)\s*[:=]\s*['\''\"][^'\''\"]{8,}' \

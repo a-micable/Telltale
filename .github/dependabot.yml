@@ -8,3 +8,13 @@ updates:
     labels:
       - dependencies
       - github-actions
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    # Pins live in requirements-ci.txt (clang-format, gcovr, pytest).

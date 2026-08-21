@@ -1,4 +1,5 @@
-# Pinned tools used by CI / local lint & coverage (not runtime deps).
+# Pinned tools used by CI / local lint, coverage, and pytest suite discovery.
 # Telltale itself has zero third-party C++ package dependencies.
 clang-format==22.1.8
 gcovr==8.6
+pytest==8.4.2

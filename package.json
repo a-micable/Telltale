@@ -1,0 +1,9 @@
+{
+  "name": "telltale",
+  "private": true,
+  "description": "C++17 binary event-log CLI — npm scripts wrap Make for tooling that expects package.json",
+  "scripts": {
+    "build": "make",
+    "test": "./scripts/run_tests.sh"
+  }
+}

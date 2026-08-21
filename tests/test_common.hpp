@@ -81,3 +81,4 @@ void run_cli_validation_tests();
 void run_logging_tests();
 void run_manager_logging_tests();
 void run_fresh_clone_tests();
+void run_filler_cleanup_tests();

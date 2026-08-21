@@ -1,0 +1,7 @@
+# Exact package versions for ubuntu-22.04 (jammy) CI images.
+# Install with: scripts/install_ci_apt.sh
+build-essential=
+cmake=3.22.1-1ubuntu1.22.04.2
+lcov=1.15-1
+cppcheck=2.7-1
+clang-tidy=1:14.0-55~exp2

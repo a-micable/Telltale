@@ -57,6 +57,7 @@ set(TELLTALE_TEST_SOURCES
   tests/test_logging.cpp
   tests/test_managers.cpp
   tests/test_fresh_clone.cpp
+  tests/test_filler_cleanup.cpp
   tests/test_telltale.cpp
 )
 
