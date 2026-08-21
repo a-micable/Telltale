@@ -12,7 +12,7 @@ namespace telltale {
 
 enum class LogLevel { Info = 0, Warn = 1, Error = 2 };
 
-// Minimal leveled logger with timestamp and module tag.
+// Structured logger: emits key=value fields (ts, level, module, msg).
 class Logger {
  public:
   static Logger& instance() {
@@ -54,6 +54,7 @@ class Logger {
     return "INFO";
   }
 
+  // Example: ts=2026-08-21T19:00:00Z level=WARN module=network msg=hello
   static std::string format(LogLevel level, const std::string& module, const std::string& message) {
     using clock = std::chrono::system_clock;
     const auto now = clock::now();
@@ -61,8 +62,8 @@ class Logger {
     std::tm tm{};
     gmtime_r(&t, &tm);
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ") << " [" << level_name(level) << "] [" << module
-        << "] " << message;
+    oss << "ts=" << std::put_time(&tm, "%Y-%m-%dT%H:%M:%SZ") << " level=" << level_name(level)
+        << " module=" << module << " msg=" << message;
     return oss.str();
   }
 
