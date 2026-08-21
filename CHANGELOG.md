@@ -19,6 +19,7 @@ All notable changes to Telltale are documented in this file.
 
 ### Removed
 - Unused algorithm / database / analysis filler modules (BatchProcessor / PerfAnalyzer boilerplate)
+- Root `expand.py` synthetic-history / padding generator and remaining BatchProcessor filler under optimization/network/storage
 
 ### Notes
 - Project type: self-contained C++ CLI/library for binary event logs (not IaC)
