@@ -43,7 +43,7 @@ jobs:
 
       - name: Install clang-format
         run: |
-          python3 -m pip install --user 'clang-format==22.1.8'
+          python3 -m pip install --user -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Check formatting
@@ -63,7 +63,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends build-essential lcov
-          python3 -m pip install --user 'gcovr==8.6'
+          python3 -m pip install --user -r requirements-ci.txt
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Run coverage gate

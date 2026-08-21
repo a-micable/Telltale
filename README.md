@@ -15,22 +15,22 @@ Telltale is an application-level binary event-log tool. It is **not** cloud infr
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (311 tests)
+- Comprehensive test suite (318 tests)
 
 ## Quick start (fresh clone)
 
-Telltale has **no third-party package dependencies** and no lockfile to commit. A machine with a C++17 toolchain is enough.
+Telltale has **no third-party C++ package dependencies**. CI Python tools are pinned in [`requirements-ci.txt`](requirements-ci.txt) (clang-format, gcovr). No runtime `.env` is required — see [`.env.example`](.env.example).
 
 ```bash
 # Debian/Ubuntu
 sudo apt-get update
-sudo apt-get install -y build-essential
+sudo apt-get install -y build-essential cmake
 
 git clone <repo-url> telltale
 cd telltale
 make          # builds ./telltale
-make test     # builds and runs the suite (canonical)
-./scripts/run_tests.sh   # same as make test
+make test     # builds and runs the suite (canonical) — expect Results: N/N passed
+./scripts/run_tests.sh   # identical to make test
 ```
 
 Alternative (CMake + CTest — same suite):
@@ -71,11 +71,15 @@ CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
 
 The runnable suite lives under `tests/` and is wired through:
 
-- **Make:** `make test` → `./build/test_telltale` (hand-rolled `TEST_ASSERT` / `RUN_TEST` in `tests/test_common.hpp`)
-- **CMake/CTest:** target `test_telltale`, test name `telltale_suite`
-- **CI:** `.github/workflows/ci.yml` job `build-and-test` executes `make test` and fails if output contains `FAILED`
+- **Make:** `make test` → `./build/test_telltale` (`TEST_ASSERT` / `RUN_TEST`, plus GoogleTest-compatible `TEST()` / `EXPECT_*` via `tests/gtest/gtest.h`)
+- **CMake/CTest:** target `test_telltale`, test name `telltale_suite` (cwd = repo root)
+- **CI:** `.github/workflows/ci.yml` job `build-and-test` runs `./scripts/run_tests.sh` and `ctest`
 
-Expect `Results: 311/311 passed` (count grows when new module tests are added).
+Expect `Results: 318/318 passed` (count grows when new module tests are added).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build/test/format/coverage workflow. Environment variables: [`.env.example`](.env.example).
 
 ## Usage
 
