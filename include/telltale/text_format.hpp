@@ -80,4 +80,6 @@ class TextImporter {
 
 Result text_format_full_verify(const std::string& original, const std::string& reimported);
 
+// Implementations: src/text_export.cpp (TextExporter) and src/text_import.cpp (TextImporter).
+
 }  // namespace telltale
