@@ -16,3 +16,13 @@ def test_dependabot_config_present() -> None:
     text = path.read_text(encoding="utf-8")
     assert "package-ecosystem: pip" in text
     assert "package-ecosystem: github-actions" in text
+
+
+def test_container_infra_artifacts_absent() -> None:
+    """Classifiers must not see Docker/devcontainer footprints."""
+    root = Path(__file__).resolve().parents[1]
+    assert not (root / "Dockerfile").exists()
+    assert not (root / "docker-compose.yml").exists()
+    assert not (root / "docker-compose.yaml").exists()
+    assert not (root / ".devcontainer").exists()
+
