@@ -59,6 +59,7 @@ set(TELLTALE_TEST_SOURCES
   tests/test_text_format.cpp
   tests/test_cli_validation.cpp
   tests/test_cli_args.cpp
+  tests/test_binary_io.cpp
   tests/test_logging.cpp
   tests/test_managers.cpp
   tests/test_fresh_clone.cpp
@@ -74,9 +75,24 @@ target_compile_options(test_telltale PRIVATE ${TELLTALE_CXX_FLAGS})
 
 enable_testing()
 include(CTest)
-add_test(NAME telltale_suite COMMAND test_telltale)
-set_tests_properties(telltale_suite PROPERTIES
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  PASS_REGULAR_EXPRESSION "[0-9]+/[0-9]+ passed"
-  FAIL_REGULAR_EXPRESSION "FAILED"
-)
+
+function(telltale_add_suite name)
+  if(ARGC GREATER 1)
+    add_test(NAME ${name} COMMAND test_telltale ${ARGV1})
+  else()
+    add_test(NAME ${name} COMMAND test_telltale)
+  endif()
+  set_tests_properties(${name} PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    PASS_REGULAR_EXPRESSION "[0-9]+/[0-9]+ passed"
+    FAIL_REGULAR_EXPRESSION "FAILED"
+  )
+endfunction()
+
+telltale_add_suite(telltale_suite)
+telltale_add_suite(test_binary_io binary_io)
+telltale_add_suite(test_filter_engine filter_engine)
+telltale_add_suite(test_diff_engine diff_engine)
+telltale_add_suite(test_cli_args cli_args)
+telltale_add_suite(test_crc32 crc32)
+telltale_add_suite(test_logging logging)

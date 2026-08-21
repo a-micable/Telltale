@@ -52,6 +52,7 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_text_format.cpp \
 	$(TEST_DIR)/test_cli_validation.cpp \
 	$(TEST_DIR)/test_cli_args.cpp \
+	$(TEST_DIR)/test_binary_io.cpp \
 	$(TEST_DIR)/test_logging.cpp \
 	$(TEST_DIR)/test_managers.cpp \
 	$(TEST_DIR)/test_fresh_clone.cpp \
