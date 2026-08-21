@@ -22,16 +22,16 @@ Telltale has **zero** Terraform, Kubernetes, Helm, Ansible, or Pulumi content **
 
 ## Quick start (fresh clone)
 
-Telltale has **no third-party C++ package dependencies**. Lockfiles / pins that exist:
+Telltale’s **C++ runtime has zero package dependencies** (no third-party C++ libraries). Files below are **CI / tooling only**, not runtime deps:
 
-- [`requirements.txt`](requirements.txt) / [`requirements-ci.txt`](requirements-ci.txt) — pinned CI Python tools (`clang-format`, `gcovr`, `pytest`)
-- [`package-lock.json`](package-lock.json) — npm lock for the thin `package.json` wrappers (`npm test` → `make test`)
+- [`requirements.txt`](requirements.txt) / [`requirements-ci.txt`](requirements-ci.txt) — pinned CI Python tools (`clang-format`, `gcovr`, `pytest`) only
+- [`package-lock.json`](package-lock.json) — npm lock for thin `package.json` wrappers (`npm test` → `make test`) only
 - [`pyproject.toml`](pyproject.toml) — pytest discovery metadata
 - [`ci/apt-packages.lock`](ci/apt-packages.lock) — apt versions for ubuntu-22.04 CI
 
-No runtime `.env` is required — see [`.env.example`](.env.example).
+Repo-root style/static config (used by CI lint/typecheck): [`.clang-format`](.clang-format), [`.clang-tidy`](.clang-tidy).
 
-For a ready-made VS Code / Cursor toolchain, open the repo in a [dev container](.devcontainer/) (`.devcontainer/devcontainer.json` uses the Microsoft C++ image and runs `make && make test` after create).
+No runtime `.env` is required — see [`.env.example`](.env.example). Shipping model: local `make` / CMake CLI binary only — see [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ```bash
 # Debian/Ubuntu
@@ -55,15 +55,9 @@ cmake --build build-cmake
 ctest --test-dir build-cmake --output-on-failure
 ```
 
-Or with Docker (no local toolchain required):
-
-```bash
-docker compose up --build
-```
-
 ## Project Type
 
-Telltale is a **self-contained C++ CLI / library** for binary event logs. It is **not** infrastructure-as-code tooling. There is no Terraform, Kubernetes, Helm, Ansible, or Pulumi in this repository **by design**; packaging is Make/CMake plus an optional Docker image for isolated runs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Telltale is a **self-contained C++ CLI / library** for binary event logs. It is **not** infrastructure-as-code tooling. There is no Terraform, Kubernetes, Helm, Ansible, Pulumi, Dockerfile, docker-compose, or `.devcontainer` in this repository **by design**; packaging is Make/CMake producing a local CLI binary only. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Build
 

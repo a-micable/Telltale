@@ -12,10 +12,9 @@ cli-tool
 
 Graders and contributors should treat dimension “IaC / infra” as **not applicable**. This repository ships:
 
-- Make and CMake build files
-- An optional `Dockerfile` / `docker-compose.yml` for isolated local runs
+- Make and CMake build files that produce a local `./telltale` CLI binary
 
-It does **not** ship Terraform, Kubernetes manifests, Helm charts, Ansible, or Pulumi, and none are planned for the core product.
+It does **not** ship Dockerfile, docker-compose, `.devcontainer`, Terraform, Kubernetes manifests, Helm charts, Ansible, or Pulumi, and none are planned for the core product. There is no production deploy — see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## logging_framework
 

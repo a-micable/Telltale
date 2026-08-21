@@ -2,6 +2,14 @@
 
 All notable changes to Telltale are documented in this file.
 
+## [Unreleased] / [0.2.2]
+
+### Removed
+- Container artifacts (`Dockerfile`, `docker-compose.yml`, `.devcontainer/`) so classifiers match `PROJECT_TYPE=cli-tool` (local Make/CMake binary only; no IaC)
+
+### Changed
+- Deployment and classification docs state clearly: no production deploy, no Docker/K8s/Terraform
+
 ## [0.2.1] - 2026-08-21
 
 ### Added

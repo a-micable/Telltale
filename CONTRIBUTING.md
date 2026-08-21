@@ -62,3 +62,14 @@ Fails if core line coverage is below **70%** (enforced by `gcovr --fail-under-li
 ## Commit style
 
 Prefer one feature or bug fix in `src/` paired with tests under `tests/` in the same commit. Run `./scripts/run_tests.sh` before committing. Do not add synthetic history generators (`expand_*.py`).
+
+
+## Maintainers & review
+
+External contributors are welcome. Pull requests are reviewed by maintainers before merge:
+
+- Prefer **conventional commits** (`feat:`, `fix:`, `docs:`, `test:`, `ci:`, `chore:`, …)
+- Pair each feature or bug fix under `src/` / `include/` with tests under `tests/` in the same PR when practical
+- Run `make test` (and `pytest -q` if you touch Python discovery) before requesting review
+- Maintainers merge when CI (`test`, `lint`, `typecheck`, `coverage`) is green and the change matches `PROJECT_TYPE=cli-tool` (no IaC/container packaging)
+
