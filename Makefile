@@ -29,7 +29,9 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_common.cpp \
 	$(TEST_DIR)/test_crc32.cpp \
 	$(TEST_DIR)/test_writer.cpp \
-	$(TEST_DIR)/test_payload_roundtrip.cpp \
+	$(TEST_DIR)/test_roundtrip_counter.cpp \
+	$(TEST_DIR)/test_roundtrip_keyvalue.cpp \
+	$(TEST_DIR)/test_roundtrip_print.cpp \
 	$(TEST_DIR)/test_endian.cpp \
 	$(TEST_DIR)/test_event_roundtrip.cpp \
 	$(TEST_DIR)/test_schema.cpp \
@@ -37,6 +39,8 @@ TEST_SRCS = \
 	$(TEST_DIR)/test_state_crc.cpp \
 	$(TEST_DIR)/test_multi_event.cpp \
 	$(TEST_DIR)/test_filter_engine.cpp \
+	$(TEST_DIR)/test_diff_engine.cpp \
+	$(TEST_DIR)/test_compaction_engine.cpp \
 	$(TEST_DIR)/test_text_format.cpp \
 	$(TEST_DIR)/test_cli_validation.cpp \
 	$(TEST_DIR)/test_telltale.cpp
