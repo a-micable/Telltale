@@ -12,17 +12,40 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
 - Comprehensive test suite (276 tests)
 
-## Build
+## Quick start (fresh clone)
 
-Requirements: g++ with C++17 support.
+Telltale has **no third-party package dependencies** and no lockfile to commit. A machine with a C++17 toolchain is enough.
 
 ```bash
+# Debian/Ubuntu
+sudo apt-get update
+sudo apt-get install -y build-essential
+
+git clone <repo-url> telltale
+cd telltale
 make          # builds ./telltale
-make test     # builds and runs the test suite
-make clean    # removes build artifacts
+make test     # builds and runs the suite (expect 276/276 passed)
 ```
 
+Or with Docker (no local toolchain required):
+
+```bash
+docker compose up --build
+```
+
+## Build
+
+Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
+
+| Command | What it does |
+|---------|----------------|
+| `make` | Build the `./telltale` binary |
+| `make test` | Build and run the test suite (`build/test_telltale`) |
+| `make clean` | Remove `build/` and `./telltale` |
+
 Compiler flags: `-Wall -Werror -Wextra -pedantic -std=c++17`
+
+CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
 
 ## Usage
 
