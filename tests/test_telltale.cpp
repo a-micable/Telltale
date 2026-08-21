@@ -19,6 +19,9 @@ int main() {
   run_compaction_engine_tests();
   run_text_format_tests();
   run_cli_validation_tests();
+  run_logging_tests();
+  run_manager_logging_tests();
+  run_fresh_clone_tests();
   std::cout << std::endl;
   std::cout << "Results: " << g_tests_passed << "/" << g_tests_run << " passed";
   if (g_tests_failed > 0) std::cout << ", " << g_tests_failed << " FAILED";

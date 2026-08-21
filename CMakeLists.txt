@@ -14,9 +14,13 @@ set(TELLTALE_LIB_SOURCES
   src/dispatcher.cpp
   src/builtin_handlers.cpp
   src/filter_engine.cpp
+  src/payload_fields.cpp
   src/diff_engine.cpp
   src/compaction_engine.cpp
-  src/text_format.cpp
+  src/text_export.cpp
+  src/text_import.cpp
+  src/network.cpp
+  src/storage_backends.cpp
   src/cli.cpp
 )
 
@@ -28,8 +32,10 @@ add_executable(telltale-cli src/main.cpp)
 target_link_libraries(telltale-cli PRIVATE telltale)
 target_compile_options(telltale-cli PRIVATE ${TELLTALE_CXX_FLAGS})
 set_target_properties(telltale-cli PROPERTIES OUTPUT_NAME telltale)
+find_package(Threads REQUIRED)
+target_link_libraries(telltale PUBLIC Threads::Threads)
 
-# Hand-rolled suite (same sources as `make test`). No third-party test framework.
+# Hand-rolled suite with GoogleTest-compatible TEST()/EXPECT_* macros (tests/gtest/gtest.h).
 set(TELLTALE_TEST_SOURCES
   tests/test_common.cpp
   tests/test_crc32.cpp
@@ -48,6 +54,9 @@ set(TELLTALE_TEST_SOURCES
   tests/test_compaction_engine.cpp
   tests/test_text_format.cpp
   tests/test_cli_validation.cpp
+  tests/test_logging.cpp
+  tests/test_managers.cpp
+  tests/test_fresh_clone.cpp
   tests/test_telltale.cpp
 )
 
@@ -60,6 +69,7 @@ enable_testing()
 include(CTest)
 add_test(NAME telltale_suite COMMAND test_telltale)
 set_tests_properties(telltale_suite PROPERTIES
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   PASS_REGULAR_EXPRESSION "[0-9]+/[0-9]+ passed"
   FAIL_REGULAR_EXPRESSION "FAILED"
 )
