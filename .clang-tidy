@@ -1,0 +1,7 @@
+Checks: >
+  readability-*,
+  bugprone-*,
+  modernize-*
+WarningsAsErrors: ''
+HeaderFilterRegex: 'include/telltale/.*'
+FormatStyle: file
