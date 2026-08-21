@@ -5,7 +5,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 ## Repository Classification
 
 **Classification: C++ CLI / library (not infrastructure).**  
-Telltale is an application-level binary event-log tool. It is **not** cloud infra, platform ops, or IaC. Automated classifiers should treat tags like “infra” as incorrect unless Terraform/Kubernetes/Helm/Ansible/Pulumi content is added later (none is present by design).
+Telltale is an application-level binary event-log tool. It is **not** cloud infra, platform ops, or IaC. GitHub topics should be `cli`, `cpp`, `binary-format` (not terraform/kubernetes). There is no Terraform, Kubernetes, Helm, Ansible, or Pulumi in this repository **by design**.
 
 ## Features
 
@@ -15,11 +15,17 @@ Telltale is an application-level binary event-log tool. It is **not** cloud infr
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (318 tests)
+- Comprehensive test suite (319 tests)
 
 ## Quick start (fresh clone)
 
-Telltale has **no third-party C++ package dependencies**. CI Python tools are pinned in [`requirements-ci.txt`](requirements-ci.txt) (clang-format, gcovr). No runtime `.env` is required — see [`.env.example`](.env.example).
+Telltale has **no third-party C++ package dependencies**. Lockfiles / pins that exist:
+
+- [`requirements-ci.txt`](requirements-ci.txt) — pinned CI Python tools (`clang-format`, `gcovr`, `pytest`)
+- [`package-lock.json`](package-lock.json) — npm lock for the thin `package.json` wrappers (`npm test` → `make test`)
+- [`ci/apt-packages.lock`](ci/apt-packages.lock) — apt versions for ubuntu-22.04 CI
+
+No runtime `.env` is required — see [`.env.example`](.env.example).
 
 ```bash
 # Debian/Ubuntu
@@ -31,6 +37,8 @@ cd telltale
 make          # builds ./telltale
 make test     # builds and runs the suite (canonical) — expect Results: N/N passed
 ./scripts/run_tests.sh   # identical to make test
+pytest -q                # same suite via pytest discovery wrapper
+npm test                 # same suite via package.json script
 ```
 
 Alternative (CMake + CTest — same suite):
@@ -72,10 +80,12 @@ CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
 The runnable suite lives under `tests/` and is wired through:
 
 - **Make:** `make test` → `./build/test_telltale` (`TEST_ASSERT` / `RUN_TEST`, plus GoogleTest-compatible `TEST()` / `EXPECT_*` via `tests/gtest/gtest.h`)
+- **pytest:** `pytest -q` → `tests/test_suite_runner.py` invokes `./scripts/run_tests.sh` (same C++ suite; discoverable by static analyzers)
+- **npm:** `npm test` → `./scripts/run_tests.sh` (see `package.json` / `package-lock.json`)
 - **CMake/CTest:** target `test_telltale`, test name `telltale_suite` (cwd = repo root)
-- **CI:** `.github/workflows/ci.yml` job `build-and-test` runs `./scripts/run_tests.sh` and `ctest`
+- **CI:** `.github/workflows/ci.yml` job `build-and-test` runs Make, pytest, and CTest on every push
 
-Expect `Results: 318/318 passed` (count grows when new module tests are added).
+Expect `Results: 319/319 passed` (count grows when new module tests are added).
 
 ## Contributing
 
