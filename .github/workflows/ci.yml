@@ -27,7 +27,7 @@ jobs:
             echo "Test suite reported FAILED"
             exit 1
           fi
-          grep -q "284/284 passed" test-output.txt
+          grep -q "299/299 passed" test-output.txt
 
   lint:
     runs-on: ubuntu-22.04
@@ -46,3 +46,48 @@ jobs:
           clang-format --version
           mapfile -t files < <(find src include tests -type f \( -name '*.cpp' -o -name '*.hpp' \) | sort)
           clang-format --dry-run --Werror "${files[@]}"
+
+  coverage:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential lcov
+          python3 -m pip install --user 'gcovr==8.6'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run coverage gate
+        run: make coverage
+
+  static-analysis:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy and cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-tidy cppcheck
+
+      - name: Run cppcheck on core sources
+        run: |
+          cppcheck --enable=warning,style,performance,portability \
+            --error-exitcode=1 --inline-suppr --std=c++17 \
+            -I include \
+            src/crc32.cpp src/binary_io.cpp src/handler_registry.cpp \
+            src/schema_update.cpp src/dispatcher.cpp src/builtin_handlers.cpp \
+            src/cli.cpp src/main.cpp
+
+      - name: Run clang-tidy on CLI entrypoints
+        run: |
+          clang-tidy \
+            --checks='-*,bugprone-*,-bugprone-easily-swappable-parameters,clang-analyzer-*' \
+            --warnings-as-errors='bugprone-*,clang-analyzer-*' \
+            --header-filter='include/telltale/(cli|errors)\\.hpp' \
+            src/cli.cpp src/main.cpp -- \
+            -std=c++17 -Iinclude -Wall

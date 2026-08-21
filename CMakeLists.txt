@@ -1,24 +1,61 @@
 cmake_minimum_required(VERSION 3.15)
-project(telltale VERSION 1.0.0)
+project(telltale VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -Wextra -pedantic")
 
-file(GLOB SOURCES "src/*.cpp")
-file(GLOB HEADERS "include/telltale/*.hpp")
+set(TELLTALE_CXX_FLAGS -Wall -Werror -Wextra -pedantic)
 
-add_library(telltale STATIC ${SOURCES} ${HEADERS})
+set(TELLTALE_LIB_SOURCES
+  src/crc32.cpp
+  src/binary_io.cpp
+  src/handler_registry.cpp
+  src/schema_update.cpp
+  src/dispatcher.cpp
+  src/builtin_handlers.cpp
+  src/filter_engine.cpp
+  src/diff_engine.cpp
+  src/compaction_engine.cpp
+  src/text_format.cpp
+  src/cli.cpp
+)
+
+add_library(telltale STATIC ${TELLTALE_LIB_SOURCES})
 target_include_directories(telltale PUBLIC include)
+target_compile_options(telltale PRIVATE ${TELLTALE_CXX_FLAGS})
 
 add_executable(telltale-cli src/main.cpp)
-target_link_libraries(telltale-cli telltale)
+target_link_libraries(telltale-cli PRIVATE telltale)
+target_compile_options(telltale-cli PRIVATE ${TELLTALE_CXX_FLAGS})
+set_target_properties(telltale-cli PROPERTIES OUTPUT_NAME telltale)
+
+# Hand-rolled suite (same sources as `make test`). No third-party test framework.
+set(TELLTALE_TEST_SOURCES
+  tests/test_common.cpp
+  tests/test_crc32.cpp
+  tests/test_writer.cpp
+  tests/test_payload_roundtrip.cpp
+  tests/test_endian.cpp
+  tests/test_event_roundtrip.cpp
+  tests/test_schema.cpp
+  tests/test_registry.cpp
+  tests/test_state_crc.cpp
+  tests/test_multi_event.cpp
+  tests/test_filter_engine.cpp
+  tests/test_text_format.cpp
+  tests/test_cli_validation.cpp
+  tests/test_telltale.cpp
+)
+
+add_executable(test_telltale ${TELLTALE_TEST_SOURCES})
+target_include_directories(test_telltale PRIVATE include tests)
+target_link_libraries(test_telltale PRIVATE telltale)
+target_compile_options(test_telltale PRIVATE ${TELLTALE_CXX_FLAGS})
 
 enable_testing()
-file(GLOB TEST_SOURCES "tests/test_*.cpp")
-foreach(test ${TEST_SOURCES})
-    get_filename_component(test_name ${test} NAME_WE)
-    add_executable(${test_name} ${test})
-    target_link_libraries(${test_name} telltale gtest gtest_main)
-    add_test(NAME ${test_name} COMMAND ${test_name})
-endforeach()
+include(CTest)
+add_test(NAME telltale_suite COMMAND test_telltale)
+set_tests_properties(telltale_suite PROPERTIES
+  PASS_REGULAR_EXPRESSION "[0-9]+/[0-9]+ passed"
+  FAIL_REGULAR_EXPRESSION "FAILED"
+)

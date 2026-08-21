@@ -10,7 +10,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (284 tests)
+- Comprehensive test suite (299 tests)
 
 ## Quick start (fresh clone)
 
@@ -24,7 +24,15 @@ sudo apt-get install -y build-essential
 git clone <repo-url> telltale
 cd telltale
 make          # builds ./telltale
-make test     # builds and runs the suite (expect 284/284 passed)
+make test     # builds and runs the suite (expect 299/299 passed)
+```
+
+Alternative (CMake + CTest — same suite):
+
+```bash
+cmake -S . -B build-cmake
+cmake --build build-cmake
+ctest --test-dir build-cmake --output-on-failure
 ```
 
 Or with Docker (no local toolchain required):
@@ -33,6 +41,10 @@ Or with Docker (no local toolchain required):
 docker compose up --build
 ```
 
+## Project Type
+
+Telltale is a **self-contained C++ CLI / library** for binary event logs. It is **not** infrastructure-as-code tooling. There is no Terraform, Kubernetes, Helm, Ansible, or Pulumi in this repository **by design**; packaging is Make/CMake plus an optional Docker image for isolated runs. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
 ## Build
 
 Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
@@ -40,12 +52,24 @@ Requirements: `g++` with C++17 support (`build-essential` on Debian/Ubuntu).
 | Command | What it does |
 |---------|----------------|
 | `make` | Build the `./telltale` binary |
-| `make test` | Build and run the test suite (`build/test_telltale`) |
+| `make test` | Build and run the test suite (`build/test_telltale`) — **canonical test command** |
+| `make coverage` | Rebuild with gcov flags, run tests, emit `coverage/index.html` (fails if core line coverage &lt; 70%) |
 | `make clean` | Remove `build/` and `./telltale` |
+| `ctest --test-dir build-cmake` | Same suite via CMake (`enable_testing` / CTest) |
 
 Compiler flags: `-Wall -Werror -Wextra -pedantic -std=c++17`
 
 CI runs `make` then `make test` on every push (see `.github/workflows/ci.yml`).
+
+## Testing
+
+The runnable suite lives under `tests/` and is wired through:
+
+- **Make:** `make test` → `./build/test_telltale` (hand-rolled `TEST_ASSERT` / `RUN_TEST` in `tests/test_common.hpp`)
+- **CMake/CTest:** target `test_telltale`, test name `telltale_suite`
+- **CI:** `.github/workflows/ci.yml` job `build-and-test` executes `make test` and fails if output contains `FAILED`
+
+Expect `Results: 299/299 passed` (count grows when new module tests are added).
 
 ## Usage
 
