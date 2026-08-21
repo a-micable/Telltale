@@ -320,6 +320,23 @@ Flags (exactly one must be set):
 | 0x0008 | BuiltinStats     |
 | 0x00FF | BuiltinNoOp      |
 
+## Architecture
+
+Modules wired into the CLI (`include/telltale/cli.hpp` / `src/cli.cpp`):
+
+| Module | Role |
+|--------|------|
+| `binary_io` | Binary event log reader/writer with CRC32-protected records |
+| `dispatcher` | Replay engine; dispatches each record to a registered handler |
+| `handler_registry` | Flat handler table (function pointer + context per type ID) |
+| `schema_update` | Mid-stream register / replace / deregister of handlers |
+| `filter_engine` | Filter records by type, time, and payload fields |
+| `diff_engine` | LCS-based record and field-level log comparison |
+| `compaction_engine` | Compact logs (drop superseded key-values, etc.) |
+| `text_format` | Human-readable export/import of binary logs |
+
+Supporting pieces used by those modules: `crc32`, `builtin_handlers`, `types`, `errors`.
+
 ## Project Structure
 
 ```
