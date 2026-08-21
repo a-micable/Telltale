@@ -27,4 +27,4 @@ jobs:
             echo "Test suite reported FAILED"
             exit 1
           fi
-          grep -q "276/276 passed" test-output.txt
+          grep -q "284/284 passed" test-output.txt

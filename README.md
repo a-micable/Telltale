@@ -10,7 +10,7 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (276 tests)
+- Comprehensive test suite (284 tests)
 
 ## Quick start (fresh clone)
 
@@ -24,7 +24,7 @@ sudo apt-get install -y build-essential
 git clone <repo-url> telltale
 cd telltale
 make          # builds ./telltale
-make test     # builds and runs the suite (expect 276/276 passed)
+make test     # builds and runs the suite (expect 284/284 passed)
 ```
 
 Or with Docker (no local toolchain required):
