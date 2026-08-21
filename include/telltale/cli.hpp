@@ -20,6 +20,7 @@ class Cli {
   static int cmd_compact(const std::vector<std::string>& args);
   static int cmd_export(const std::vector<std::string>& args);
   static int cmd_import(const std::vector<std::string>& args);
+  static int cmd_health(const std::vector<std::string>& args);
   static int cmd_help(const std::vector<std::string>& args);
 
   static void print_usage();

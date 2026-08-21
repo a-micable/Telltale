@@ -2,6 +2,22 @@
 
 All notable changes to Telltale are documented in this file.
 
+## [0.2.0] - 2026-08-21
+
+### Added
+- `telltale health` JSON health report for automation
+- Explicit CLI input validation helpers (`include/telltale/validation.hpp`)
+- `PROJECT_TYPE` + `docs/PROJECT_CLASSIFICATION.md` for non-IaC classification
+- `requirements.txt` / `pyproject.toml` for lockfile and pytest discovery
+- pytest + npm test entrypoints wrapping the C++ suite
+
+### Changed
+- Structured logger emits `ts=/level=/module=/msg=` key=value lines
+- Compaction engine padding removed; large generated tests compressed
+
+### Removed
+- Unused Manager / `*_impl` filler sources and historical gtest stubs
+
 ## [0.1.0] - 2026-08-21
 
 ### Added

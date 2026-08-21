@@ -4,8 +4,11 @@ Telltale is a binary event log format with a replay engine and plugin-style even
 
 ## Repository Classification
 
-**Classification: C++ CLI / library (not infrastructure).**  
-Telltale is an application-level binary event-log tool. It is **not** cloud infra, platform ops, or IaC. GitHub topics should be `cli`, `cpp`, `binary-format` (not terraform/kubernetes). There is no Terraform, Kubernetes, Helm, Ansible, or Pulumi in this repository **by design**.
+**This is a C++ CLI / library — not infrastructure.**
+
+See [`PROJECT_TYPE`](PROJECT_TYPE) and [`docs/PROJECT_CLASSIFICATION.md`](docs/PROJECT_CLASSIFICATION.md). GitHub topics: `cli`, `cpp`, `binary-format`, `event-log`, `command-line`.
+
+Telltale has **zero** Terraform, Kubernetes, Helm, Ansible, or Pulumi content **by design**. Scoring under an “infra / IaC” rubric is a misclassification; the correct bucket is CLI/devtools/library.
 
 ## Features
 
@@ -15,14 +18,15 @@ Telltale is an application-level binary event-log tool. It is **not** cloud infr
 - Schema update events for dynamic handler registration
 - Eight built-in event types with real handlers
 - CLI with `write`, `replay`, `verify`, `filter`, `diff`, `compact`, `export`, and `import` subcommands
-- Comprehensive test suite (319 tests)
+- Comprehensive test suite (322 tests)
 
 ## Quick start (fresh clone)
 
 Telltale has **no third-party C++ package dependencies**. Lockfiles / pins that exist:
 
-- [`requirements-ci.txt`](requirements-ci.txt) — pinned CI Python tools (`clang-format`, `gcovr`, `pytest`)
+- [`requirements.txt`](requirements.txt) / [`requirements-ci.txt`](requirements-ci.txt) — pinned CI Python tools (`clang-format`, `gcovr`, `pytest`)
 - [`package-lock.json`](package-lock.json) — npm lock for the thin `package.json` wrappers (`npm test` → `make test`)
+- [`pyproject.toml`](pyproject.toml) — pytest discovery metadata
 - [`ci/apt-packages.lock`](ci/apt-packages.lock) — apt versions for ubuntu-22.04 CI
 
 No runtime `.env` is required — see [`.env.example`](.env.example).
@@ -85,7 +89,7 @@ The runnable suite lives under `tests/` and is wired through:
 - **CMake/CTest:** target `test_telltale`, test name `telltale_suite` (cwd = repo root)
 - **CI:** `.github/workflows/ci.yml` job `build-and-test` runs Make, pytest, and CTest on every push
 
-Expect `Results: 319/319 passed` (count grows when new module tests are added).
+Expect `Results: 322/322 passed` (count grows when new module tests are added).
 
 ## Contributing
 

@@ -21,6 +21,7 @@ set(TELLTALE_LIB_SOURCES
   src/text_import.cpp
   src/network.cpp
   src/storage_backends.cpp
+  src/health.cpp
   src/cli.cpp
 )
 
@@ -58,6 +59,7 @@ set(TELLTALE_TEST_SOURCES
   tests/test_managers.cpp
   tests/test_fresh_clone.cpp
   tests/test_filler_cleanup.cpp
+  tests/test_health_validation.cpp
   tests/test_telltale.cpp
 )
 
