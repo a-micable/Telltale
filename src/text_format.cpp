@@ -18,14 +18,23 @@ TextImporter::TextImporter() : parse_errors_(0), strict_(true) {}
 TextImporter::~TextImporter() = default;
 
 std::string TextExporter::escape_string(const std::string& s) {
-    std::string out; out.reserve(s.size());
+    std::string out;
+    out.reserve(s.size());
     for (char c : s) {
-        if (c == '\\' || c == '"') out.push_back('\\');
-        else if (c == '\n') { out += "\\n"; continue; }
-        else if (c == '\r') { out += "\\r"; continue; }
-        else if (c == '\t') { out += "\\t"; continue; }
-        else out.push_back(c);
-    } return out;
+        if (c == '\\' || c == '"') {
+            out.push_back('\\');
+            out.push_back(c);
+        } else if (c == '\n') {
+            out += "\\n";
+        } else if (c == '\r') {
+            out += "\\r";
+        } else if (c == '\t') {
+            out += "\\t";
+        } else {
+            out.push_back(c);
+        }
+    }
+    return out;
 }
 
 std::string TextExporter::hex_encode(const std::vector<uint8_t>& data) {
@@ -57,7 +66,12 @@ static Result validate_export_payload(uint16_t type_id, const std::vector<uint8_
             Result r=EventLogReader::decode_counter_payload(payload,cd);
             if (!r.ok()) return r;
             if (cd.name.size()>MAX_NAME_LENGTH) return Result::fail(ErrorCode::StringTooLong,"name");
-            if (cd.use_absolute?cd.absolute:cd.delta < INT64_MIN/2 || cd.use_absolute?cd.absolute:cd.delta > INT64_MAX/2) return Result::fail(ErrorCode::InvalidPayload,"value");
+            {
+                const int64_t value = cd.use_absolute ? cd.absolute : cd.delta;
+                if (value < INT64_MIN / 2 || value > INT64_MAX / 2) {
+                    return Result::fail(ErrorCode::InvalidPayload, "value");
+                }
+            }
             return Result::success();
         }
         case static_cast<uint16_t>(EventType::KeyValue): {
@@ -138,6 +152,7 @@ static Result export_counter_fields(const std::vector<uint8_t>& payload, std::os
     if (!r.ok()) return r;
     out << "  name=\"" << TextExporter::escape_string(cd.name) << "\"" << std::endl;
     out << "  value=" << (cd.use_absolute ? cd.absolute : cd.delta) << std::endl;
+    out << "  absolute=" << (cd.use_absolute ? 1 : 0) << std::endl;
     return Result::success();
 }
 
@@ -146,6 +161,7 @@ static Result export_keyvalue_fields(const std::vector<uint8_t>& payload, std::o
     if (!r.ok()) return r;
     out << "  key=\"" << TextExporter::escape_string(kv.key) << "\"" << std::endl;
     out << "  value=" << kv.value << std::endl;
+    out << "  overwrite=" << (kv.overwrite ? 1 : 0) << std::endl;
     return Result::success();
 }
 
@@ -168,7 +184,7 @@ static Result export_checksum_fields(const std::vector<uint8_t>& payload, std::o
 static Result export_reset_fields(const std::vector<uint8_t>& payload, std::ostream& out) {
     uint8_t scope=0; Result r=EventLogReader::decode_reset_payload(payload,scope);
     if (!r.ok()) return r;
-    out << "  scope_flags=" << scope << std::endl;
+    out << "  scope_flags=" << static_cast<unsigned>(scope) << std::endl;
     return Result::success();
 }
 
@@ -176,7 +192,7 @@ static Result export_print_fields(const std::vector<uint8_t>& payload, std::ostr
     PrintMessage pm; Result r=EventLogReader::decode_print_payload(payload,pm);
     if (!r.ok()) return r;
     out << "  message=\"" << TextExporter::escape_string(pm.message) << "\"" << std::endl;
-    out << "  severity=" << pm.severity << std::endl;
+    out << "  severity=" << static_cast<unsigned>(pm.severity) << std::endl;
     return Result::success();
 }
 
@@ -184,7 +200,7 @@ static Result export_stats_fields(const std::vector<uint8_t>& payload, std::ostr
     StatsRequest sr; Result r=EventLogReader::decode_stats_payload(payload,sr);
     if (!r.ok()) return r;
     out << "  prefix=\"" << TextExporter::escape_string(sr.prefix) << "\"" << std::endl;
-    out << "  output_flags=" << sr.output_flags << std::endl;
+    out << "  output_flags=" << static_cast<unsigned>(sr.output_flags) << std::endl;
     return Result::success();
 }
 
@@ -1575,7 +1591,11 @@ Result TextImporter::parse_line(const std::string& line, TextRecord* current, bo
         current->raw_payload.clear();current->has_raw_payload=false; in_record=true; return Result::success();}
     if(t==TEXT_RECORD_END){if(!in_record) return Result::fail(ErrorCode::InvalidPayload,"end");
         Result r=finalize_record(*current); if(!r.ok()) return r; records_.push_back(*current); in_record=false; return Result::success();}
-    if(!in_record) return Result::fail(ErrorCode::InvalidPayload,"outside");
+    // Header metadata lines are informational and appear outside records.
+    if(!in_record) {
+        if (t.rfind("header_", 0) == 0) return Result::success();
+        return Result::fail(ErrorCode::InvalidPayload,"outside");
+    }
     std::string k,v; Result r=parse_key_value(t,k,v); if(!r.ok()) return r;
     if(k=="index") current->index=static_cast<uint32_t>(std::strtoul(v.c_str(),nullptr,10));
     else if(k=="type_id") current->type_id=static_cast<uint16_t>(std::strtoul(v.c_str(),nullptr,0));
