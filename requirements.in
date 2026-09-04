@@ -1,4 +1,4 @@
-clang-format==22.1.8
+clang-format==23.1.0
 gcovr==8.6
 pytest==9.0.3
 # Backports required on CI (ubuntu-22.04 / Python 3.10) when installing with hashes.
